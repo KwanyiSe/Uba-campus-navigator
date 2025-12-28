@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>University of Bamenda — Campus Map</title>
+
+{% load static %}
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- MarkerCluster -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+<style>
+html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:#071022;color:#e6eef8;overflow:hidden}
+
+/* SPLASH */
+#splash{position:fixed;inset:0;background:#101010;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50000}
+.spinner{width:32px;height:32px;border-radius:50%;border:4px solid rgba(255,255,255,0.25);border-top-color:#fff;animation:spin 1s linear infinite;margin-bottom:18px}
+@keyframes spin{to{transform:rotate(360deg)}}
+#splash-title{font-size:22px;font-weight:700;color:#f48b23;margin-bottom:35px}
+#splash-logo-box{position:absolute;bottom:40px;text-align:center}
+#splash-logo-box img{width:120px;margin-bottom:8px}
+
+/* HEADER */
+#headerBar{position:fixed;top:0;left:0;right:0;height:56px;background:#0b1220;z-index:2000;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+#themeBtn{position:absolute;left:12px;top:9px;width:38px;height:38px;border-radius:8px;background:#111827;border:none;color:white;display:flex;align-items:center;justify-content:center;cursor:pointer}
+
+/* SEARCH */
+#searchContainer{position:fixed;top:65px;left:50%;transform:translateX(-50%);width:calc(100% - 26px);max-width:700px;z-index:2000}
+#searchBox{background:#ffffff;border-radius:12px;padding:6px 8px;display:flex;align-items:center;box-shadow:0 8px 24px rgba(2,6,23,0.4);position:relative}
+#buildingSearch{flex:1;border:0;outline:none;font-size:15px;padding:10px;background:#fff;color:#000}
+#suggestions{position:absolute;top:52px;left:8px;right:8px;background:#111827;border-radius:8px;box-shadow:0 6px 18px rgba(2,6,23,0.24);max-height:230px;overflow:auto;display:none;z-index:5000}
+.suggestion-item{padding:10px;font-size:14px;border-bottom:1px solid #eee;cursor:pointer}
+.suggestion-item:hover{background:#ffffff}
+
+/* FLOATING BUTTONS (UNDER SEARCH) */
+#floatingContainer{position:fixed;top:125px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:2000}
+.floatBtn{padding:9px 12px;border-radius:8px;background:#111827;color:#fff;border:none;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+
+/* MAP */
+#map{position:fixed;inset:0;z-index:1}
+.leaflet-control-zoom{display:none !important}
+
+/* BLUR OUTSIDE CAMPUS */
+.leaflet-blur-mask{filter:blur(4px) brightness(55%);pointer-events:none}
+
+/* POPUPS */
+.leaflet-popup-content-wrapper{background:#111827;color:white;border-radius:14px;padding:0}
+.popup-box{padding:16px;max-width:90vw}
+.popup-title{font-weight:700;font-size:16px;margin-bottom:8px}
+.popup-desc{font-size:13px;color:#cfd7e4;margin-bottom:12px}
+.popup-btn{width:100%;padding:9px;border-radius:8px;background:#1f2937;color:white;border:none;margin-bottom:6px;font-size:14px;font-weight:600}
+
+/* ROUTE INFO */
+#routeInfo{position:fixed;left:0;right:0;bottom:0;background:#0d1627;padding:14px;display:none;z-index:2000;color:#e6eef8}
+#clearNavBtn{margin-top:8px;width:100%;padding:10px;border-radius:8px;border:none;background:#e63946;color:white;font-weight:700}
+
+/* TOAST */
+#toast{position:fixed;top:110px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:white;padding:10px 14px;border-radius:8px;display:none;z-index:3000}
+
+/* MODAL */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.65);display:none;justify-content:center;align-items:center;z-index:40000}
+.modal-box{background:#111827;padding:22px;border-radius:12px;width:85%;max-width:330px;text-align:center}
+.modal-box button{margin-top:15px;padding:10px 12px;background:#1f2937;color:white;border:0;border-radius:8px;font-weight:600}
+</style>
+</head>
+
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="spinner"></div>
+  <div id="splash-title">Campus Map</div>
+  <div id="splash-logo-box">
+    <img src="{% static 'blur_uba_logo.png' %}" />
+    <div style="color:white;font-weight:600;">UNIVERSITY OF BAMENDA</div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div id="headerBar">
+  <button id="themeBtn"></button>
+  <div style="font-size:18px;font-weight:700">University of Bamenda</div>
+</div>
+
+<!-- SEARCH -->
+<div id="searchContainer">
+  <div id="searchBox">
+    <input id="buildingSearch" type="text" placeholder="Search building..." autocomplete="off" />
+    <div id="suggestions"></div>
+  </div>
+</div>
+
+<!-- FLOATING BUTTONS -->
+<div id="floatingContainer">
+  <button id="locateBtn" class="floatBtn">Locate Me</button>
+  <button id="followBtn" class="floatBtn">Follow Me</button>
+  <button id="aboutBtn" class="floatBtn">About</button>
+</div>
+
+<!-- MAP -->
+<div id="map"></div>
+
+<!-- ROUTE INFO -->
+<div id="routeInfo">
+  <div><b>Distance:</b> <span id="distVal">—</span> • <b>Duration:</b> <span id="durVal">—</span></div>
+  <button id="clearNavBtn">Clear Navigation</button>
+</div>
+
+<div id="toast"></div>
+
+<!-- ERROR / INFO MODAL -->
+<div id="errorModal" class="modal">
+  <div class="modal-box">
+    <div id="errorMsg"></div>
+    <button onclick="closeError()">OK</button>
+  </div>
+</div>
+
+<script>
+const API_URL="http://127.0.0.1:8000/api/buildings/";
+const ROUTE_URL="http://127.0.0.1:8000/api/route/";
+
+/* MAP INIT */
+const map=L.map("map",{zoomControl:false}).setView([6.011,10.2595],17);
+
+/* BASEMAPS */
+const satellite=L.tileLayer("https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",{maxZoom:20}).addTo(map);
+const dark=L.tileLayer("https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",{maxZoom:20});
+let currentBase="satellite";
+
+/* THEME TOGGLE */
+const themeBtn=document.getElementById("themeBtn");
+function applyTheme(){
+  themeBtn.innerHTML=currentBase==="satellite"
+    ? "🌙"
+    : "☀️";
+}
+applyTheme();
+themeBtn.onclick=()=>{
+  if(currentBase==="satellite"){map.removeLayer(satellite);dark.addTo(map);currentBase="dark";}
+  else{map.removeLayer(dark);satellite.addTo(map);currentBase="satellite";}
+  applyTheme();
+};
+
+/* CAMPUS BOUNDARY */
+const campusPolygon=[
+  [6.0175,10.2524],
+  [6.0161,10.2682],
+  [6.0061,10.2684],
+  [6.0050,10.2522]
+];
+const campusBounds=L.latLngBounds(campusPolygon);
+map.setMaxBounds(campusBounds.pad(0.01));
+
+/* BLUR OUTSIDE */
+const world=[[-90,-180],[-90,180],[90,180],[90,-180]];
+L.polygon([world,campusPolygon],{fillColor:"#000",fillOpacity:0.77,stroke:false,interactive:false,className:"leaflet-blur-mask"}).addTo(map);
+
+/* TOAST */
+function showToast(m){
+  const t=document.getElementById("toast");
+  t.innerText=m;t.style.display="block";
+  clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",2000);
+}
+
+/* MODAL */
+function showError(m){document.getElementById("errorMsg").innerText=m;document.getElementById("errorModal").style.display="flex";}
+function closeError(){document.getElementById("errorModal").style.display="none";}
+
+/* BUILDINGS */
+let buildingMarkers=[];
+const cluster=L.markerClusterGroup();
+
+fetch(API_URL).then(r=>r.json()).then(data=>{
+  data.forEach(b=>{
+    const m=L.marker([b.latitude,b.longitude]);
+    m.bindPopup(`
+      <div class="popup-box">
+        <div class="popup-title">${b.name}</div>
+        <div class="popup-desc">${b.description||""}</div>
+        <button class="popup-btn" onclick="setStart(${b.latitude},${b.longitude})">Set Start</button>
+        <button class="popup-btn" onclick="navigateFromPopup(${b.latitude},${b.longitude})">Navigate</button>
+      </div>
+    `);
+    buildingMarkers.push({name:b.name,lat:b.latitude,lng:b.longitude,marker:m});
+    cluster.addLayer(m);
+  });
+  map.addLayer(cluster);
+});
+
+/* SEARCH */
+const input=document.getElementById("buildingSearch");
+const suggestions=document.getElementById("suggestions");
+
+input.addEventListener("focus", () =>{
+document.getElementById("floatingContainer").style.display = "none";
+});
+
+input.addEventListener("blur", () =>{
+document.getElementById("floatingContainer").style.display = "flex";
+});
+
+input.addEventListener("input",()=>{
+  const q=input.value.toLowerCase().trim();
+  if(!q){suggestions.style.display="none";return;}
+  suggestions.innerHTML="";
+  buildingMarkers.filter(b=>b.name.toLowerCase().includes(q)).slice(0,8)
+  .forEach(b=>{
+    const d=document.createElement("div");
+    d.className="suggestion-item";d.innerText=b.name;
+    d.onclick=()=>{input.value=b.name;suggestions.style.display="none";map.setView([b.lat,b.lng],19);b.marker.openPopup();};
+    suggestions.appendChild(d);
+  });
+  suggestions.style.display="block";
+});
+
+/* USER LOCATION + ACCURACY RING */
+let userMarker=null,accuracyCircle=null,followMe=false;
+
+map.locate({watch:true,enableHighAccuracy:true});
+
+map.on("locationfound",e=>{
+  if(!campusBounds.contains(e.latlng)){
+    showError("You are not inside the University of Bamenda campus. You can still explore the map.");
+  }
+
+  if(!userMarker){
+    userMarker=L.marker(e.latlng).addTo(map);
+    accuracyCircle=L.circle(e.latlng,{radius:e.accuracy,color:"#60a5fa",fillOpacity:0.15}).addTo(map);
+  }else{
+    userMarker.setLatLng(e.latlng);
+    accuracyCircle.setLatLng(e.latlng).setRadius(e.accuracy);
+  }
+
+  if(followMe) map.setView(e.latlng,18,{animate:true});
+});
+
+/* LOCATE */
+document.getElementById("locateBtn").onclick=()=>{
+  if(!userMarker){showToast("Location unavailable");return;}
+  map.setView(userMarker.getLatLng(),18);
+};
+
+/* FOLLOW ME */
+document.getElementById("followBtn").onclick=()=>{
+  followMe=!followMe;
+  showToast(followMe?"Follow ON":"Follow OFF");
+};
+
+/* FOOTER TAG */
+map.attributionControl.addAttribution("&nbsp;@University of Bamenda ");
+
+/* ROUTING */
+let routeStart=null,routeEnd=null,routeLine=null;
+
+function setStart(lat,lng){routeStart=L.latLng(lat,lng);showToast("Start set");}
+
+async function navigateFromPopup(lat,lng){
+  if(!routeStart && userMarker) routeStart=userMarker.getLatLng();
+  if(!routeStart){showToast("Set start first");return;}
+  routeEnd=L.latLng(lat,lng);
+
+  const r=await fetch(`${ROUTE_URL}?start=${routeStart.lat},${routeStart.lng}&end=${routeEnd.lat},${routeEnd.lng}`);
+  const d=await r.json();
+
+  if(routeLine) map.removeLayer(routeLine);
+  routeLine=L.polyline(d.coordinates.map(c=>[c[1],c[0]]),{color:"#3b82f6",weight:6}).addTo(map);
+
+  map.fitBounds(routeLine.getBounds(),{padding:[40,40]});
+  document.getElementById("distVal").innerText=Math.round(d.distance)+" m";
+  document.getElementById("durVal").innerText=d.duration;
+  document.getElementById("routeInfo").style.display="block";
+}
+
+/* CLEAR NAV */
+document.getElementById("clearNavBtn").onclick=()=>{
+  if(routeLine) map.removeLayer(routeLine);
+  routeLine=null;routeStart=null;routeEnd=null;
+  document.getElementById("routeInfo").style.display="none";
+  showToast("Navigation cleared");
+};
+
+/* ABOUT */
+document.getElementById("aboutBtn").onclick=()=>{
+  showError("Developed by Kwanyi Sedrick Bodeh sedrickbodeh654@gmail.com");
+};
+
+/* SPLASH EXIT */
+window.onload=()=>{
+  setTimeout(()=>{
+    const s=document.getElementById("splash");
+    s.style.transition="0.6s";s.style.opacity=0;
+    setTimeout(()=>s.remove(),600);
+  },1200);
+};
+</script>
+</body>
+</html>

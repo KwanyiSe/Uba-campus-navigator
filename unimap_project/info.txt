@@ -1,0 +1,54 @@
+write a script that automatically load your json data collected before admin can add extra
+of new buildings data.
+impliment the add delete and update for superusers
+impliment an algorithm that calculate the shortest path on your map
+
+impliment your tests before moving to the mobile apps make sure the backend is ok
+including the apis test from heigit
+
+problems:
+1) my street map is poor i can't even see my buildings (find out is was some of the theme)
+almost fixed
+
+2) build the models and your searilizers
+done
+
+
+api used:
+1)  Heigit "heidelberg institute for geoinformation technology" 
+    login; sedrickbodeh654@gmail.com  mypass"private"
+  ((check out all the endpoint allot you can improve your map))
+
+  having a problem error saying that i should check my api that count draw route
+  can not draw route from oned building to the other
+
+  then a problem with my live location it its not accurate at times it show at two
+  different spot on the map. this is with the first map campus_map
+  if the second map is not that good use the green theme from the first map 
+  and update it into the second map
+
+
+after all also remember to get data for the remainding building like where you will pass your form a
+
+ideal base on the style for the featurer
+when like the the box that shows the info about the hall when tap on
+it can improve to drop up and showing details like select the hall. move from this hall to 
+that hall the on the map the direction is drawn 
+the map offline if posible
+
+
+build it in such a way that when the user is not in the current location (school area)
+let him know just like in the princtons univecity map
+lasly impliment offline cash so students can view direction without intenet
+add a back door for your app like if someone steal it how can u still get in. hack it
+
+before hosting make sure all important info is store in the backend
+
+secure the api ey using .env: using settings.py for now
+
+add a cathe to easily acess repeated routes: done catch for 10min
+
+
+
+how can it support another language for your francophone mates (english and french)
+can the broswer do that for me ?
