@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>University of Bamenda — Campus Map</title>
+<title>University of Bamenda Campus Map</title>
 
 {% load static %}
 
@@ -21,146 +21,109 @@
 <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
 <style>
-html,body{
-  height:100%;margin:0;
+html,body {
+  height:100%;
+  margin:0;
   font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;
-  background:#071022;color:#e6eef8;overflow:hidden;
+  background:#071022;
+  color:#e6eef8;
+  overflow:hidden;
 }
 
-/* ---------------- SPLASH ---------------- */
+/* SPLASH */
 #splash {
-  position:fixed;inset:0;z-index:20000;
-  background:#000;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:20px;
+  position:fixed; inset:0; z-index:20000;
+  background:#000;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:20px;
 }
-#splash img{ width:70px;height:auto;opacity:1; }
-#splash h1{ color:#d85c15;font-size:20px;margin:0;font-weight:700; }
-.spinner{
-  width:26px;height:26px;border-radius:50%;
-  border:4px solid rgba(255,255,255,0.25);
-  border-top-color:#fff;animation:spin 1s linear infinite;
-}
-@keyframes spin{ to{ transform:rotate(360deg)} }
+#splash img { width:70px;height:auto;opacity:1; }
+#splash h1 { color:#d85c15;font-size:20px;margin:0;font-weight:700; }
+.spinner { width:26px;height:26px;border-radius:50%; border:4px solid rgba(255,255,255,0.25); border-top-color:#fff; animation:spin 1s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg) } }
 
-/* ---------------- HEADER ---------------- */
+/* HEADER */
 #headerBar {
-  position:fixed;top:0;left:0;right:0;height:56px;
-  background:#0b1220;z-index:10010;
-  display:flex;align-items:center;justify-content:center;
+  position:fixed; top:0;left:0;right:0; height:56px;
+  background:#0b1220;
+  z-index:10010;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   box-shadow:0 6px 18px rgba(2,6,23,0.6);
 }
-#themeBtn{
+#themeBtn {
   position:absolute;left:12px;top:9px;width:38px;height:38px;
   border-radius:8px;background:#111827;border:none;color:white;
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;
 }
-#titleText{ font-size:17px;font-weight:700;color:#fff;letter-spacing:0.5px; }
+#titleText { font-size:17px;font-weight:700;color:#fff;letter-spacing:0.5px; }
 
-/* ---------------- SEARCH BAR ---------------- */
-#searchContainer{
-  position:fixed;top:66px;left:50%;transform:translateX(-50%);
-  width:calc(100% - 28px);max-width:700px;z-index:10009;
-  display:flex;gap:8px;padding:8px;
+/* SEARCH BAR */
+#searchContainer {
+  position:fixed; top:66px; left:50%; transform:translateX(-50%);
+  width:calc(100% - 28px); max-width:700px; z-index:10009;
+  display:flex; gap:8px; padding:8px;
 }
-#searchBox{
-  flex:1;background:#fff;border-radius:12px;padding:6px 8px;
-  display:flex;align-items:center;
-  box-shadow:0 8px 24px rgba(2,6,23,0.4);
+#searchBox {
+  flex:1; background:#fff; border-radius:12px; padding:6px 8px; display:flex; align-items:center; box-shadow:0 8px 24px rgba(2,6,23,0.4);
 }
-#buildingSearch{
-  flex:1;border:0;outline:none;font-size:15px;padding:10px;background:white;color:black;
+#buildingSearch {
+  flex:1; border:0; outline:none; font-size:15px; padding:10px; background:white; color:black;
 }
-#searchBtn{
-  background:#1f2937;color:#fff;border:none;padding:10px 14px;
-  border-radius:10px;font-weight:700;cursor:pointer;
+#searchBtn {
+  background:#1f2937; color:#fff; border:none; padding:10px 14px;
+  border-radius:10px; font-weight:700; cursor:pointer;
 }
 
-/* ---------------- AUTOCOMPLETE ---------------- */
-#suggestions{
-  position:absolute;top:52px;left:8px;right:8px;background:#fff;
-  border-radius:8px;box-shadow:0 6px 18px rgba(2,6,23,0.24);
-  max-height:230px;overflow:auto;display:none;z-index:20000;
+/* AUTOCOMPLETE */
+#suggestions {
+  position:absolute; top:52px; left:8px; right:8px; background:#fff;
+  border-radius:8px; box-shadow:0 6px 18px rgba(2,6,23,0.24);
+  max-height:230px; overflow:auto; display:none; z-index:20000;
 }
-.suggestion-item{
-  padding:10px 12px;border-bottom:1px solid rgba(0,0,0,0.06);
-  cursor:pointer;font-size:14px;color:#111;
-}
-.suggestion-item:hover{ background:#f2f8ff; }
+.suggestion-item { padding:10px 12px; border-bottom:1px solid rgba(0,0,0,0.06); cursor:pointer; font-size:14px; color:#111; }
+.suggestion-item:hover { background:#f2f8ff; }
 
-/* ---------------- MAP ---------------- */
-#map{
-  position:fixed;top:0;bottom:0;left:0;right:0;z-index:1;
-}
+/* MAP */
+#map { position:fixed; top:0;bottom:0;left:0;right:0; z-index:1; }
 
-/* -------- OUTSIDE BLUR EFFECT -------- */
-.leaflet-blur-mask{
-  filter: blur(4px) brightness(55%);
-  pointer-events:none;
-}
-
-/* ---------------- FLOATING BUTTONS ---------------- */
-.floatBtn{
-  position:fixed;right:12px;z-index:10009;border:none;color:#fff;
-  padding:10px 12px;border-radius:10px;font-weight:700;
-  cursor:pointer;background:#111827;
+/* FLOATING BUTTONS */
+.floatBtn {
+  position:fixed; right:12px; z-index:10009; border:none; color:#fff;
+  padding:10px 12px; border-radius:10px; font-weight:700; cursor:pointer; background:#111827;
   box-shadow:0 6px 18px rgba(2,6,23,0.6);
 }
 #locateBtn{ top:140px; }
-#resetBtn{ top:200px; }
+#resetBtn{ top:200px; display:none; } /* hidden initially */
+#aboutBtn{ bottom:20px; }
 
-/* ---------------- ROUTE PANEL ---------------- */
-#routeInfo{
-  position:fixed;left:0;right:0;bottom:0;z-index:10009;
-  background:rgba(2,6,23,0.95);padding:12px 14px;
-  display:none;color:#e6eef8;
-  box-shadow:0 -6px 18px rgba(2,6,23,0.6);
-}
-#routeSteps{
-  margin-top:8px;max-height:180px;overflow:auto;
-  color:#cfe7ff;font-size:13px;
+/* TOAST */
+#toast {
+  position:fixed; left:50%; top:120px; transform:translateX(-50%);
+  background:rgba(8,10,14,0.96); padding:8px 12px; border-radius:8px; color:#fff; display:none; z-index:10050;
 }
 
-/* ---------------- POPUP BUTTONS ---------------- */
-.popup-btn{
-  background:#111827;color:white;border:none;
-  padding:8px 10px;width:100%;margin-top:8px;
-  border-radius:8px;font-weight:700;cursor:pointer;
-}
-.popup-btn.secondary{ background:#0b9a78; }
-.popup-btn.stop{ background:#b91c1c; }
-
-/* ---------------- TOAST ---------------- */
-#toast{
-  position:fixed;left:50%;top:120px;transform:translateX(-50%);
-  background:rgba(8,10,14,0.96);padding:8px 12px;
-  border-radius:8px;color:#fff;display:none;z-index:10050;
+/* FULLSCREEN POPUP */
+.fullscreen-popup {
+  position:fixed; top:50%; left:50%;
+  transform:translate(-50%, -50%);
+  width:100vw; max-width:100%; max-height:80vh;
+  background:rgba(2,6,23,0.95); color:#fff; padding:16px;
+  border-radius:0; z-index:10060;
+  overflow-y:auto; text-align:center; display:none;
 }
 
-/* ---------- RESPONSIVE ---------- */
+/* RESPONSIVE */
 @media(max-width:520px){
   #titleText{ font-size:15px; }
   #locateBtn{ top:110px; }
   #resetBtn{ top:170px; }
 }
-
-/* ===================== PRINCETON TEXT LABELS ===================== */
-.big-label{
-  position:absolute;
-  font-size:52px;               /* Princeton size */
-  font-weight:900;              /* Princeton weight */
-  color:rgba(216,92,21,0.78);   /* UBA color */
-  text-transform:uppercase;
-  letter-spacing:3px;
-  pointer-events:none;
-  z-index:5000;
-  transition:opacity 0.4s ease;
-  text-shadow:0 2px 8px rgba(0,0,0,0.25),0 0 4px rgba(0,0,0,0.20);
-}
-#labelMain{ top:45%; left:50%; transform:translate(-50%, -50%); }
-#labelUp{ top:20%; right:10%; }
-#labelDown{ bottom:20%; left:10%; }
-
 </style>
 </head>
 <body>
@@ -191,173 +154,157 @@ html,body{
 <!-- MAP -->
 <div id="map"></div>
 
-<!-- PRINCETON-STYLE MAP LABELS -->
-<div id="labelMain" class="big-label">University of Bamenda</div>
-<div id="labelUp" class="big-label">Up Quarters</div>
-<div id="labelDown" class="big-label">Down Quarters</div>
-
 <!-- FLOATING BUTTONS -->
 <button id="locateBtn" class="floatBtn">Locate Me</button>
 <button id="resetBtn" class="floatBtn">Stop Navigation</button>
+<button id="aboutBtn" class="floatBtn">About Me</button>
 
-<!-- ROUTE INFO -->
-<div id="routeInfo">
-  <div id="routeSummary">
-    <b>Distance:</b> <span id="distVal">—</span> &nbsp;
-    <b>Duration:</b> <span id="durVal">—</span>
-  </div>
-  <div id="routeSteps"></div>
-</div>
-
+<!-- TOAST -->
 <div id="toast"></div>
 
+<!-- FULLSCREEN POPUPS -->
+<div id="aboutPopup" class="fullscreen-popup">
+  <h3 style="margin:0 0 8px 0;">Kwanyi Sedrick Bodeh</h3>
+  <p style="margin:0;">Email: kwanyisedrick@example.com</p>
+  <button id="closeAbout" style="margin-top:12px; padding:6px 12px; border:none; background:#1f2937; color:white; cursor:pointer;">Close</button>
+</div>
+
+<div id="routeInfo" class="fullscreen-popup">
+  <div id="routeSummary">
+    <b>Distance:</b> <span id="distVal">ó</span> &nbsp;
+    <b>Duration:</b> <span id="durVal">ó</span>
+  </div>
+  <div id="routeSteps"></div>
+  <button id="closeRoute" style="margin-top:12px; padding:6px 12px; border:none; background:#1f2937; color:white; cursor:pointer;">Close</button>
+</div>
+
 <script>
-/* ---------------- API ---------------- */
 const API_URL = "api/buildings/";
 const ROUTE_URL = "/api/route/";
 
-/* ---------------- MAP INIT ---------------- */
-const map = L.map("map", { zoomControl:true }).setView([6.011, 10.2595], 17);
-
-const satellite = L.tileLayer(
-  "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", { maxZoom:20 }
-).addTo(map);
-
-const dark = L.tileLayer(
-  "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom:20 }
-);
-
+// Initialize map without zoom buttons
+const map = L.map("map", { zoomControl:false }).setView([6.011, 10.2595], 17);
+const satellite = L.tileLayer("https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", { maxZoom:20 }).addTo(map);
+const dark = L.tileLayer("https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom:20 });
 let currentBase = "satellite";
-
-/* Leaflet attribution tag */
 map.attributionControl.addAttribution("@University of Bamenda");
 
-/* Fade labels like Princeton */
-map.on("zoomend", () => {
-  const zoom = map.getZoom();
-  const opacity = zoom <= 15 ? 0.85 : zoom === 16 ? 0.45 : 0;
-  document.querySelectorAll(".big-label").forEach(el => {
-    el.style.opacity = opacity;
-  });
-});
-
-/* THEME BUTTON SWITCH */
+// Theme switch
 const themeBtn = document.getElementById("themeBtn");
-function applyTheme(){
+function applyTheme() {
   themeBtn.innerHTML = currentBase === "satellite"
     ? `<svg viewBox="0 0 24 24" width="18"><path fill="none" stroke="white" stroke-width="1.6" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>`
     : `<svg viewBox="0 0 24 24" width="18" fill="none" stroke="white" stroke-width="1.6"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a8 8 0 00-14.8 0"/></svg>`;
 }
-themeBtn.onclick = () => {
-  if(currentBase === "satellite"){ map.removeLayer(satellite); dark.addTo(map); currentBase="dark"; }
-  else{ map.removeLayer(dark); satellite.addTo(map); currentBase="satellite"; }
+themeBtn.onclick = () => { 
+  if(currentBase==="satellite"){ map.removeLayer(satellite); dark.addTo(map); currentBase="dark"; }
+  else { map.removeLayer(dark); satellite.addTo(map); currentBase="satellite"; }
   applyTheme();
 };
 applyTheme();
 
-/* ---------------- CAMPUS BOUNDARY ---------------- */
-const campusBoundary = [
-  [6.01750, 10.25240],
-  [6.01610, 10.26820],
-  [6.00610, 10.26840],
-  [6.00500, 10.25220],
-];
-
+// Campus boundary
+const campusBoundary = [[6.01750,10.25240],[6.01610,10.26820],[6.00610,10.26840],[6.00500,10.25220]];
 const bounds = L.latLngBounds(campusBoundary);
 map.setMaxBounds(bounds.pad(0.01));
 map.fitBounds(bounds);
 
-/* Outside-world blur mask */
-const world = [[-90,-180],[-90,180],[90,180],[90,-180]];
-L.polygon([world, campusBoundary], {
-  color:"#0000", fillColor:"#000", fillOpacity:0.55,
-  stroke:false, interactive:false, className:"leaflet-blur-mask"
-}).addTo(map);
+// Outside blur
+const world = [[-90,-180],[-90,180],[90,180],[-90,180]];
+L.polygon([world, campusBoundary], {color:"#0000", fillColor:"#000", fillOpacity:0.55, stroke:false, interactive:false, className:"leaflet-blur-mask"}).addTo(map);
 
-/* ---------------- MARKERS ---------------- */
+// Building markers
 let buildingMarkers = [];
 const cluster = L.markerClusterGroup();
+let destinationMarker = null; // destination marker
+let routeLine = null;
+let routeStart = null;
+let routeEnd = null;
 
 fetch(API_URL)
-.then(r => r.json())
-.then(data => {
-  data.forEach(b => {
-    const icon = L.icon({
-      iconUrl:"https://cdn-icons-png.flaticon.com/512/854/854878.png",
-      iconSize:[36,36], iconAnchor:[18,36]
-    });
-
-    const marker = L.marker([b.latitude, b.longitude], { icon });
-
-    marker.bindPopup(`
-      <div style="min-width:180px">
-        <div style="font-weight:700;margin-bottom:6px;">${b.name}</div>
-        <div style="color:#6b7280;font-size:13px;margin-bottom:8px;">${b.description||""}</div>
-        <button class="popup-btn" onclick="setStart(${b.latitude},${b.longitude})">Set Start</button>
-        <button class="popup-btn secondary" onclick="setEnd(${b.latitude},${b.longitude})">Set Destination</button>
-        <button class="popup-btn stop" onclick="navigateFromPopup(${b.latitude},${b.longitude})">Navigate</button>
-      </div>
-    `);
-
+.then(r=>r.json())
+.then(data=>{
+  data.forEach(b=>{
+    const icon=L.icon({iconUrl:"https://cdn-icons-png.flaticon.com/512/854/854878.png",iconSize:[36,36],iconAnchor:[18,36]});
+    const marker=L.marker([b.latitude,b.longitude],{icon});
+    marker.on("click",()=>showMarkerInfo(b.name,b.description));
     cluster.addLayer(marker);
-    buildingMarkers.push({ name:b.name, marker, lat:b.latitude, lng:b.longitude });
+    buildingMarkers.push({name:b.name,lat:b.latitude,lng:b.longitude});
   });
-
   map.addLayer(cluster);
 });
 
-/* ---------------- ROUTING ---------------- */
-let routeStart=null, routeEnd=null, routeLine=null;
+// Fullscreen marker info
+function showMarkerInfo(name, description){
+  let modal=document.getElementById("markerPopup");
+  if(!modal){
+    modal=document.createElement("div");
+    modal.id="markerPopup";
+    modal.className="fullscreen-popup";
+    modal.innerHTML=`<h3 id="modalName"></h3><p id="modalDesc"></p>
+    <button id="closeModal" style="margin-top:12px; padding:6px 12px; border:none; background:#1f2937; color:white; cursor:pointer;">Close</button>`;
+    document.body.appendChild(modal);
+    document.getElementById("closeModal").onclick=()=>{modal.style.display="none";}
+  }
+  document.getElementById("modalName").innerText=name;
+  document.getElementById("modalDesc").innerText=description||"";
+  modal.style.display="block";
+}
 
-function setStart(lat,lng){ routeStart=L.latLng(lat,lng); showToast("Start set"); }
-function setEnd(lat,lng){ routeEnd=L.latLng(lat,lng); showToast("Destination set"); }
+// Navigate route
+async function navigateRoute(){
+  if(!routeStart) { showToast("Waiting for GPS..."); return; }
+  const res=await fetch(`${ROUTE_URL}?start=${routeStart.lat},${routeStart.lng}&end=${routeEnd.lat},${routeEnd.lng}`);
+  const data=await res.json();
+  const coords=data.coordinates.map(c=>[c[1],c[0]]);
 
+  // Remove previous route line
+  if(routeLine) map.removeLayer(routeLine);
+
+  // Hide all markers cluster
+  map.removeLayer(cluster);
+
+  // Add route polyline
+  routeLine=L.polyline(coords,{color:"#60a5fa",weight:6}).addTo(map);
+  map.fitBounds(routeLine.getBounds(),{padding:[40,120]});
+
+  // Show only destination marker
+  if(destinationMarker) map.removeLayer(destinationMarker);
+  destinationMarker=L.marker([routeEnd.lat, routeEnd.lng], {
+    icon:L.icon({ iconUrl:"https://cdn-icons-png.flaticon.com/512/854/854878.png", iconSize:[36,36], iconAnchor:[18,36] })
+  }).addTo(map);
+
+  // Show route info & Stop Navigation
+  document.getElementById("routeInfo").style.display="block";
+  document.getElementById("resetBtn").style.display="block";
+
+  document.getElementById("distVal").innerText=Math.round(data.distance)+" m";
+  document.getElementById("durVal").innerText=data.duration;
+}
+
+// Set destination from popup
 function navigateFromPopup(lat,lng){
-  setEnd(lat,lng);
+  routeEnd=L.latLng(lat,lng);
   if(!routeStart && userMarker) routeStart=userMarker.getLatLng();
-  if(!routeStart){ showToast("Waiting for GPS..."); return; }
   navigateRoute();
 }
 
-async function navigateRoute(){
-  const url = `${ROUTE_URL}?start=${routeStart.lat},${routeStart.lng}&end=${routeEnd.lat},${routeEnd.lng}`;
-  const res = await fetch(url);
-  const data = await res.json();
-
-  const coords = data.coordinates.map(c => [c[1],c[0]]);
-  if(routeLine) map.removeLayer(routeLine);
-
-  routeLine = L.polyline(coords, { color:"#60a5fa", weight:6 }).addTo(map);
-  map.fitBounds(routeLine.getBounds(), { padding:[40,120] });
-
-  document.getElementById("distVal").innerText = Math.round(data.distance) + " m";
-  document.getElementById("durVal").innerText = data.duration; /* FIXED: formatted duration */
-}
-
-/* ---------------- LOCATION ---------------- */
+// User location
 let userMarker=null;
-map.on("locationfound", e => {
+map.on("locationfound",e=>{
   if(!userMarker){
-    userMarker = L.marker(e.latlng,{
-      icon:L.icon({
-        iconUrl:"https://cdn-icons-png.flaticon.com/512/684/684908.png",
-        iconSize:[36,36], iconAnchor:[18,18]
-      })
-    }).addTo(map);
-  } else { userMarker.setLatLng(e.latlng); }
+    userMarker=L.marker(e.latlng,{icon:L.icon({iconUrl:"https://cdn-icons-png.flaticon.com/512/684/684908.png",iconSize:[36,36],iconAnchor:[18,18]})}).addTo(map);
+  }else userMarker.setLatLng(e.latlng);
 });
 map.locate({watch:true, enableHighAccuracy:true});
 
-/* ---------------- SEARCH ---------------- */
+// Search
 const input=document.getElementById("buildingSearch");
 const suggestions=document.getElementById("suggestions");
-
-input.addEventListener("input", () => {
+input.addEventListener("input",()=>{
   const q=input.value.trim().toLowerCase();
-  if(!q){ suggestions.style.display="none"; return; }
-
+  if(!q){suggestions.style.display="none";return;}
   const match=buildingMarkers.filter(b=>b.name.toLowerCase().includes(q)).slice(0,8);
-
   suggestions.innerHTML="";
   match.forEach(m=>{
     const div=document.createElement("div");
@@ -367,39 +314,42 @@ input.addEventListener("input", () => {
       input.value=m.name;
       suggestions.style.display="none";
       map.setView([m.lat,m.lng],19);
-      m.marker.openPopup();
+      showMarkerInfo(m.name,"");
     };
     suggestions.appendChild(div);
   });
-
   suggestions.style.display="block";
 });
 
-/* ---------------- RESET NAVIGATION ---------------- */
+// Reset navigation
 document.getElementById("resetBtn").onclick=()=>{
   if(routeLine) map.removeLayer(routeLine);
-  routeLine=null; routeStart=null; routeEnd=null;
+  if(destinationMarker) map.removeLayer(destinationMarker);
+  routeLine=null; routeStart=null; routeEnd=null; destinationMarker=null;
+
+  // Show all markers
+  map.addLayer(cluster);
+
   document.getElementById("routeInfo").style.display="none";
+  document.getElementById("resetBtn").style.display="none";
   showToast("Navigation cleared");
 };
+document.getElementById("closeRoute").onclick=document.getElementById("resetBtn").onclick;
 
-/* ---------------- TOAST ---------------- */
+// About Me
+const aboutBtn=document.getElementById("aboutBtn");
+const aboutPopup=document.getElementById("aboutPopup");
+document.getElementById("closeAbout").onclick=()=>{aboutPopup.style.display="none";}
+aboutBtn.onclick=()=>{aboutPopup.style.display="block";}
+
+// Toast
 function showToast(msg){
-  const t=document.getElementById("toast");
-  t.innerText=msg; t.style.display="block";
-  clearTimeout(t._hide);
-  t._hide=setTimeout(()=>t.style.display="none",2000);
+  const t=document.getElementById("toast"); t.innerText=msg; t.style.display="block";
+  clearTimeout(t._hide); t._hide=setTimeout(()=>t.style.display="none",2000);
 }
 
-/* ---------------- SPLASH HIDE ---------------- */
-window.onload=()=>{
-  setTimeout(()=>{
-    const s=document.getElementById("splash");
-    s.style.transition="opacity 450ms"; s.style.opacity="0";
-    setTimeout(()=>s.remove(),500);
-  },2000);
-};
-
+// Splash
+window.onload=()=>{ setTimeout(()=>{ const s=document.getElementById("splash"); s.style.transition="opacity 450ms"; s.style.opacity="0"; setTimeout(()=>s.remove(),500); },2000); };
 </script>
 </body>
 </html>
