@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>University of Bamenda — Campus Map</title>
+
+{% load static %}
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- MarkerCluster -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+<style>
+html,body{
+  height:100%;margin:0;
+  font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;
+  background:#071022;color:#e6eef8;
+  overflow:hidden;
+}
+
+/* HEADER */
+#headerBar{
+  position:fixed;top:0;left:0;right:0;height:56px;
+  background:#0b1220;
+  display:flex;align-items:center;justify-content:center;
+  z-index:10010;
+  box-shadow:0 6px 18px rgba(0,0,0,.6);
+}
+
+/* SEARCH */
+#searchContainer{
+  position:fixed;top:66px;left:50%;
+  transform:translateX(-50%);
+  width:calc(100% - 28px);
+  max-width:700px;
+  z-index:10009;
+}
+#searchBox{
+  background:#fff;
+  border-radius:12px;
+  padding:6px 8px;
+  display:flex;align-items:center;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);
+  position:relative;
+}
+#buildingSearch{
+  flex:1;border:0;outline:none;
+  font-size:15px;padding:10px;
+}
+#suggestions{
+  position:absolute;top:52px;left:8px;right:8px;
+  background:#fff;border-radius:8px;
+  max-height:230px;overflow:auto;
+  display:none;z-index:20000;
+}
+.suggestion-item{
+  padding:10px 12px;
+  cursor:pointer;font-size:14px;
+  color:#111;
+}
+.suggestion-item:hover{background:#f3f4f6}
+
+/* MAP */
+#map{position:fixed;inset:0}
+
+/* USER DOT */
+.user-dot{
+  width:14px;height:14px;
+  background:#2563eb;
+  border:3px solid #fff;
+  border-radius:50%;
+  box-shadow:0 0 12px rgba(37,99,235,.9);
+  position:relative;
+}
+.user-dot::after{
+  content:"";
+  position:absolute;inset:-8px;
+  border-radius:50%;
+  background:rgba(37,99,235,.35);
+  animation:pulse 1.6s infinite;
+}
+@keyframes pulse{
+  0%{transform:scale(.4);opacity:.9}
+  100%{transform:scale(1.6);opacity:0}
+}
+
+/* FLOAT BUTTONS */
+#floatingContainer{
+  position:fixed;top:140px;right:12px;
+  display:flex;flex-direction:column;gap:8px;
+  z-index:10000;
+}
+.floatBtn{
+  background:#111827;color:#fff;
+  border:none;padding:10px 12px;
+  border-radius:10px;font-weight:700;
+}
+.floatBtn.active{background:#2563eb}
+
+/* POPUP BUTTON */
+.popup-btn{
+  width:100%;margin-top:6px;
+  background:#1f2937;color:#fff;
+  border:none;padding:8px;
+  border-radius:8px;font-size:14px;
+}
+
+/* ROUTE INFO */
+#routeInfo{
+  position:fixed;left:0;right:0;bottom:0;
+  background:rgba(2,6,23,.95);
+  padding:12px;display:none;
+  z-index:10000;
+}
+
+/* TOAST */
+#toast{
+  position:fixed;top:120px;left:50%;
+  transform:translateX(-50%);
+  background:rgba(2,6,23,.95);
+  padding:8px 12px;border-radius:8px;
+  display:none;z-index:20000;
+}
+
+/* BLUR */
+.leaflet-blur-mask{
+  filter:blur(4px) brightness(55%);
+  pointer-events:none;
+}
+</style>
+</head>
+
+<body>
+
+<div id="headerBar">
+  <b>University of Bamenda</b>
+</div>
+
+<div id="searchContainer">
+  <div id="searchBox">
+    <input id="buildingSearch" placeholder="Search building..." autocomplete="off" />
+    <div id="suggestions"></div>
+  </div>
+</div>
+
+<div id="floatingContainer">
+  <button id="locateBtn" class="floatBtn">Locate</button>
+  <button id="followBtn" class="floatBtn active">Follow</button>
+  <button id="stopNavigationBtn" class="floatBtn" style="display:none">Stop</button>
+</div>
+
+<div id="map"></div>
+
+<div id="routeInfo">
+  <b>Distance:</b> <span id="distVal">0</span> |
+  <b>Duration:</b> <span id="durVal">0</span>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* CONFIG */
+const API_URL="http://127.0.0.1:8000/api/buildings/";
+const ROUTE_URL="http://127.0.0.1:8000/api/route/";
+
+/* MAP */
+const map=L.map("map").setView([6.011,10.2595],17);
+L.tileLayer("https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",{maxZoom:20}).addTo(map);
+
+/* BOUNDARIES */
+const bamendaBounds=L.latLngBounds([5.90,10.15],[6.10,10.40]);
+const campusBoundary=[
+  [6.01750,10.25240],[6.01610,10.26820],
+  [6.00610,10.26840],[6.00500,10.25220]
+];
+const campusBounds=L.latLngBounds(campusBoundary);
+map.setMaxBounds(campusBounds.pad(.01));
+map.fitBounds(campusBounds);
+
+L.polygon([[[-90,-180],[-90,180],[90,180],[90,-180]],campusBoundary],{
+  fillColor:"#000",fillOpacity:.55,stroke:false,interactive:false,
+  className:"leaflet-blur-mask"
+}).addTo(map);
+
+/* USER LOCATION */
+let userMarker=null,accuracyCircle=null,lastGood=null,follow=true;
+const userIcon=L.divIcon({html:`<div class="user-dot"></div>`,iconSize:[20,20],iconAnchor:[10,10]});
+
+map.on("locationfound",e=>{
+  let ll=e.latlng,acc=e.accuracy;
+  if(acc>80 && lastGood) ll=lastGood; else lastGood=ll;
+  if(!bamendaBounds.contains(ll)) showToast("You are outside Bamenda");
+
+  if(!userMarker){
+    userMarker=L.marker(ll,{icon:userIcon,zIndexOffset:1000}).addTo(map);
+    accuracyCircle=L.circle(ll,{radius:acc,color:"#60a5fa",fillOpacity:.15}).addTo(map);
+  }else{
+    userMarker.setLatLng(ll);
+    accuracyCircle.setLatLng(ll).setRadius(acc);
+  }
+  if(follow) map.setView(ll,map.getZoom());
+});
+
+map.locate({watch:true,enableHighAccuracy:true,maximumAge:1000});
+
+/* BUTTONS */
+followBtn.onclick=()=>{follow=!follow;followBtn.classList.toggle("active",follow)};
+locateBtn.onclick=()=>{if(userMarker) map.setView(userMarker.getLatLng(),18)};
+
+/* CENTER POPUP */
+function openCenteredPopup(marker){
+  const p=map.latLngToContainerPoint(marker.getLatLng()).subtract([0,120]);
+  map.panTo(map.containerPointToLatLng(p));
+  marker.openPopup();
+}
+
+/* BUILDINGS + SEARCH */
+const cluster=L.markerClusterGroup();
+const buildings=[];
+
+fetch(API_URL).then(r=>r.json()).then(data=>{
+  data.forEach(b=>{
+    const m=L.marker([b.latitude,b.longitude]);
+    m.bindPopup(`
+      <b>${b.name}</b><br>
+      <small>${b.description||""}</small>
+      <button class="popup-btn" onclick="setStart(${b.latitude},${b.longitude})">Set Start</button>
+      <button class="popup-btn" onclick="navigateFromPopup(${b.latitude},${b.longitude})">Navigate</button>
+    `);
+    m.on("click",()=>openCenteredPopup(m));
+    cluster.addLayer(m);
+    buildings.push({name:b.name,marker:m,lat:b.latitude,lng:b.longitude});
+  });
+  map.addLayer(cluster);
+});
+
+/* SEARCH */
+const input=document.getElementById("buildingSearch");
+const suggestions=document.getElementById("suggestions");
+
+input.oninput=()=>{
+  const q=input.value.toLowerCase();
+  if(!q){suggestions.style.display="none";return;}
+  suggestions.innerHTML="";
+  buildings.filter(b=>b.name.toLowerCase().includes(q)).slice(0,8)
+  .forEach(b=>{
+    const d=document.createElement("div");
+    d.className="suggestion-item";
+    d.innerText=b.name;
+    d.onclick=()=>{
+      input.value=b.name;
+      suggestions.style.display="none";
+      map.setView([b.lat,b.lng],19);
+      openCenteredPopup(b.marker);
+    };
+    suggestions.appendChild(d);
+  });
+  suggestions.style.display="block";
+};
+
+/* ROUTING */
+let routeStart=null,routeLine=null;
+function setStart(lat,lng){routeStart=L.latLng(lat,lng);showToast("Start set")}
+async function navigateFromPopup(lat,lng){
+  if(!routeStart && userMarker) routeStart=userMarker.getLatLng();
+  if(!routeStart) return showToast("Waiting for GPS");
+
+  const r=await fetch(`${ROUTE_URL}?start=${routeStart.lat},${routeStart.lng}&end=${lat},${lng}`);
+  const d=await r.json();
+  if(routeLine) map.removeLayer(routeLine);
+  routeLine=L.polyline(d.coordinates.map(c=>[c[1],c[0]]),{color:"#60a5fa",weight:6}).addTo(map);
+  map.fitBounds(routeLine.getBounds(),{padding:[40,120]});
+  distVal.innerText=Math.round(d.distance)+" m";
+  durVal.innerText=d.duration;
+  routeInfo.style.display="block";
+  stopNavigationBtn.style.display="block";
+}
+
+stopNavigationBtn.onclick=()=>{
+  if(routeLine) map.removeLayer(routeLine);
+  routeLine=null;routeStart=null;
+  routeInfo.style.display="none";
+  stopNavigationBtn.style.display="none";
+};
+
+/* TOAST */
+function showToast(m){
+  toast.innerText=m;
+  toast.style.display="block";
+  clearTimeout(toast._t);
+  toast._t=setTimeout(()=>toast.style.display="none",2000);
+}
+</script>
+
+</body>
+</html>
