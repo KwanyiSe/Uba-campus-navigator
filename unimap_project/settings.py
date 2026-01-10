@@ -28,7 +28,7 @@ ORS_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjEzYWUxMmU0NWIzN
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['uba-navigator.onrender.com']
+ALLOWED_HOSTS = ['Uba-navigator.onrender.com']
 
 #enable media file saving(photos/icons)
 MEDIA_URL = '/media/'
