@@ -7,6 +7,10 @@
 
 {% load static %}
 
+<!-- linking for progressive web app (PWA) -->
+<link rel="manifest" href="{% static 'manifest.json' %}">
+<meta name="theme-color" content="#0b1220">
+
  <!-- Google  analytics -tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-7RT1071LD5"></script>
 <script>
@@ -242,6 +246,11 @@ button:active, .popup-btn:active {
 <button id="stopNavigationBtn" class="floatBtn">Stop Navigation</button>
 <button id="aboutBtn" class="floatBtn">About</button>
 
+<button id="installBtn" class="floatBtn" style="top:320px;display:none;">
+  Install App
+</button>
+
+
 <!-- ROUTE INFO -->
 <div id="routeInfo">
   <div id="routeSummary">
@@ -264,6 +273,7 @@ button:active, .popup-btn:active {
     <button id="closeAbout" class="popup-btn">Close</button>
   </div>
 </div>
+
 
 <script>
 const API_URL = "/api/buildings/";
@@ -510,6 +520,42 @@ window.onload = () => {
   },2000);
 };
 
+
+/* INSTALL LOGIC */
+let deferredPrompt;
+const installBtn = document.getElementById("installBtn");
+
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBtn.style.display = "block";
+
+  // Analytics
+  gtag('event', 'pwa_install_prompt_shown');
+});
+
+installBtn.onclick = async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const result = await deferredPrompt.userChoice;
+
+  if (result.outcome === "accepted") {
+    gtag('event', 'pwa_installed');
+  }
+
+  deferredPrompt = null;
+  installBtn.style.display = "none";
+};
+
+
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/service-worker.js")
+    .then(() => console.log("PWA ready"))
+    .catch(err => console.error("SW error", err));
+}
 </script>
 
 </body>
