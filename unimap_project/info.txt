@@ -52,3 +52,8 @@ add a cathe to easily acess repeated routes: done catch for 10min
 
 how can it support another language for your francophone mates (english and french)
 can the broswer do that for me ?
+
+==================================\site is live now/============================
+i want to add PWA(progressive web app)
+include google analytics for buildings
+and add a app install button
