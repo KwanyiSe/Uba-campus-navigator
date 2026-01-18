@@ -3,6 +3,7 @@ from django.db import models
 # Creating models for our campus
 
 class Building(models.Model):
+    """stores building informations"""
     name = models.CharField(max_length=100)
     latitude = models.FloatField()
     longitude = models.FloatField()
@@ -14,3 +15,23 @@ class Building(models.Model):
     def __str__(self):
         return self.name
     
+
+class SiteVisit(models.Model):
+    """
+    Stores one record per unique browser session.
+
+    We use Django's session_key as a proxy for a unique visitor.
+    This is the most accurate approach WITHOUT user authentication.
+    """
+
+    # Unique browser session identifier
+    session_key = models.CharField(max_length=40, unique=True)
+
+    # When the visitor first appeared on the site
+    first_visit = models.DateTimeField(auto_now_add=True)
+
+    # Updated automatically on every request
+    last_visit = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.session_key
