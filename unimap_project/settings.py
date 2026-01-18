@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-1!h^&z*5@edx40&4-tp0=9dg0v@$yhl!5!l60y#+*6)mxkw7hd
 ORS_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjEzYWUxMmU0NWIzNTQ1NzI5N2NhY2NjNWUyOGYyNGU0IiwiaCI6Im11cm11cjY0In0="
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1','Uba-navigator.onrender.com']
 
