@@ -1,7 +1,8 @@
 from django.contrib.admin import AdminSite
 from django.contrib import admin
-from .models import Building, SiteVisit
+from .models import Building, SiteVisit, DailyStats
 from django.utils import timezone
+from django.db import models
 
 #adding back our group and users since i am using a custom admin site
 from django.contrib.auth.models import User, Group 
@@ -41,6 +42,11 @@ except AlreadyRegistered:
     
 
 #registering models
+@admin.register(DailyStats, site=campus_admin_site)
+class DailyStatsAdmin(admin.ModelAdmin):
+    list_display = ("date", "visitors")
+    ordering = ("-date",)
+
 
 @admin.register(SiteVisit, site=campus_admin_site)
 class SiteVisitAdmin(admin.ModelAdmin):
@@ -59,7 +65,6 @@ def admin_index(request):
     Definitions:
     - total_visitors: all unique sessions ever seen
     - visitors_today: first-time visitors today
-    - returning_visitors: visitors who first visited before today
     - only visible to superusers.
     """
     
@@ -68,22 +73,22 @@ def admin_index(request):
 
     today = timezone.now().date()
 
-    total_visitors = SiteVisit.objects.count()
+    total_visitors = DailyStats.objects.aggregate(
+        total=models.Sum("visitors")
+    )["total"] or 0
 
-    visitors_today = SiteVisit.objects.filter(
-        first_visit__date=today
-    ).count()
+    visitors_today = DailyStats.objects.filter(
+        date=today
+    ).first()
 
-    returning_visitors = SiteVisit.objects.filter(
-        first_visit__date__lt=today
-    ).count()
-    
-    # tracking started
-    first_record = SiteVisit.objects.order_by("first_visit").first()
-    stats_started_on = first_record.first_visit.date() if first_record else None
+    visitors_today = visitors_today.visitors if visitors_today else 0
 
     return {
         "total_visitors": total_visitors,
         "visitors_today": visitors_today,
-        "returning_visitors": returning_visitors,
     }
+
+
+
+
+
