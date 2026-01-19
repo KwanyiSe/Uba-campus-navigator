@@ -2,8 +2,13 @@ from django.db import models
 
 # Creating models for our campus
 
+
 class Building(models.Model):
-    """stores building informations"""
+    """
+        
+        stores building informations
+    
+    """
     name = models.CharField(max_length=100)
     latitude = models.FloatField()
     longitude = models.FloatField()
@@ -35,3 +40,16 @@ class SiteVisit(models.Model):
 
     def __str__(self):
         return self.session_key
+
+
+class DailyStats(models.Model):
+    """
+    Stores aggregated visitor counts per day.
+    This prevents numbers from dropping due to session expiry.
+    """
+
+    date = models.DateField(unique=True)
+    visitors = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return str(self.date)
