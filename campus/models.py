@@ -24,9 +24,7 @@ class Building(models.Model):
 class SiteVisit(models.Model):
     """
     Stores one record per unique browser session.
-
     We use Django's session_key as a proxy for a unique visitor.
-    This is the most accurate approach WITHOUT user authentication.
     """
 
     # Unique browser session identifier
