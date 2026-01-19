@@ -8,7 +8,9 @@
 {% load static %}
 
 
-</script>
+<!-- progressive web app (pwa) -->
+<link rel="manifest" href="{% static 'pwa/manifest.json' %}">
+<meta name="theme-color" content="#0d6efd">
 
 <!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -540,11 +542,13 @@ installBtn.onclick = async () => {
 </script>
 
 <script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/service-worker.js")
-    .then(() => console.log("PWA ready"))
-    .catch(err => console.error("SW error", err));
-}
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("{% static 'pwa/service-worker.js' %}")
+        .then(reg => console.log("Service Worker registered"))
+        .catch(err => console.log("Service Worker failed:", err));
+    });
+  }
 </script>
 
 </body>
