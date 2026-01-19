@@ -57,3 +57,6 @@ can the broswer do that for me ?
 i want to add PWA(progressive web app)
 include google analytics for buildings
 and add a app install button
+
+
+PWA added working //.
