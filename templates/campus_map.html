@@ -7,25 +7,21 @@
 
 {% load static %}
 
-
-<!-- progressive web app (pwa) -->
 <link rel="manifest" href="{% static 'pwa/manifest.json' %}">
 <meta name="theme-color" content="#0d6efd">
 
-<!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<!-- MarkerCluster -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
 <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 
-<!-- Geocoder -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
 <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
 <style>
+
 html,body{
   height:100%;margin:0;
   font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;
@@ -199,10 +195,11 @@ button:active, .popup-btn:active {
 .about-content h2{ margin-top:0; }
 .about-content a{ color:#3b82f6;font-weight:600; }
 
+
 </style>
 </head>
-
 <body>
+
 
 <!-- SPLASH -->
 <div id="splash">
@@ -266,7 +263,9 @@ button:active, .popup-btn:active {
 </div>
 
 
+
 <script>
+
 const API_URL = "/api/buildings/";
 const ROUTE_URL = "/api/route/";
 
@@ -375,8 +374,9 @@ input.addEventListener("input", () => {
     div.onclick = () => {
       input.value=m.name;
       suggestions.style.display="none";
-      map.setView([m.lat,m.lng], 19);
-      m.marker.openPopup();
+
+      dimOtherMarkers(m.marker);
+      focusBuilding(m.marker, m.lat, m.lng);
     };
     suggestions.appendChild(div);
   });
@@ -396,8 +396,9 @@ document.getElementById("searchBtn").onclick = () => {
   if(!q){ showToast("Enter a building name"); return; }
   const found = buildingMarkers.find(b => b.name.toLowerCase() === q);
   if(!found){ showToast("Building not found"); return; }
-  map.setView([found.lat,found.lng], 19);
-  found.marker.openPopup();
+
+  dimOtherMarkers(found.marker);
+  focusBuilding(found.marker, found.lat, found.lng);
 };
 
 /* USER LOCATION */
@@ -438,12 +439,33 @@ function setEnd(lat,lng){
   showToast("Destination set");
 }
 
-function navigateFromPopup(lat,lng){
-  setEnd(lat,lng);
-  if(!routeStart && userMarker) routeStart = userMarker.getLatLng();
-  if(!routeStart){ showToast("Waiting for GPS..."); return; }
+function navigateFromPopup(lat, lng) {
+  // Find the building marker once
+  const found = buildingMarkers.find(
+    b => b.lat === lat && b.lng === lng
+  );
+
+  // Highlight the building being navigated to
+  if (found) {
+    dimOtherMarkers(found.marker);
+    focusBuilding(found.marker, found.lat, found.lng);
+  }
+
+  setEnd(lat, lng);
+
+  if (!routeStart && userMarker) {
+    routeStart = userMarker.getLatLng();
+  }
+
+  if (!routeStart) {
+    showToast("Waiting for GPS...");
+    return;
+  }
+
   navigateRoute();
 }
+
+
 
 async function navigateRoute(){
   if(!routeStart || !routeEnd){ showToast("Missing location"); return; }
@@ -477,6 +499,7 @@ stopBtn.onclick = () => {
   routeEnd=null;
   document.getElementById("routeInfo").style.display="none";
   stopBtn.style.display="none";
+  restoreMarkerStyles();
   showToast("Navigation cleared");
 };
 
@@ -539,9 +562,69 @@ installBtn.onclick = async () => {
 };
 
 
+
 </script>
 
 <script>
+// ===============================
+// helper funtions
+// ===============================
+
+// Building icons
+const normalBuildingIcon = L.icon({
+  iconUrl:"https://cdn-icons-png.flaticon.com/512/854/854878.png",
+  iconSize:[42,42],
+  iconAnchor:[21,42],
+  popupAnchor:[0,-42]
+});
+
+const activeBuildingIcon = L.icon({
+  iconUrl:"https://cdn-icons-png.flaticon.com/512/854/854878.png",
+  iconSize:[56,56],
+  iconAnchor:[28,56],
+  popupAnchor:[0,-56]
+});
+
+// Focus on building funtion works with marker cluster
+function focusBuilding(marker, lat, lng, zoom = 19) {
+  map.setView([lat, lng], zoom, { animate: true });
+  cluster.zoomToShowLayer(marker, () => {
+    setTimeout(() => {
+      marker.openPopup();
+      map.panBy([0, -200]),{
+        animate: true
+      }
+    }, 250);
+  });
+}
+
+
+// Dim logic
+function dimOtherMarkers(active){
+  cluster.eachLayer(m=>{
+    if(m===active){
+      m.setOpacity(1);
+      m.setIcon(activeBuildingIcon);
+      m.setZIndexOffset(1000);
+    }else{
+      m.setOpacity(0.3);
+      m.setIcon(normalBuildingIcon);
+      m.setZIndexOffset(0);
+    }
+  });
+}
+
+function restoreMarkerStyles(){
+  cluster.eachLayer(m=>{
+    m.setOpacity(1);
+    m.setIcon(normalBuildingIcon);
+    m.setZIndexOffset(0);
+  });
+}
+</script>
+
+<script>
+
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
       navigator.serviceWorker.register("{% static 'pwa/service-worker.js' %}")
@@ -549,6 +632,7 @@ installBtn.onclick = async () => {
         .catch(err => console.log("Service Worker failed:", err));
     });
   }
+
 </script>
 
 </body>
