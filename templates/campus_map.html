@@ -448,7 +448,6 @@ function navigateFromPopup(lat, lng) {
   // Highlight the building being navigated to
   if (found) {
     dimOtherMarkers(found.marker);
-    focusBuilding(found.marker, found.lat, found.lng);
   }
 
   setEnd(lat, lng);
@@ -591,13 +590,11 @@ function focusBuilding(marker, lat, lng, zoom = 19) {
   cluster.zoomToShowLayer(marker, () => {
     setTimeout(() => {
       marker.openPopup();
-      map.panBy([0, -200]),{
-        animate: true
-      }
-    }, 250);
+      map.panBy([0, -200], true)
+
+    }, 300);
   });
 }
-
 
 // Dim logic
 function dimOtherMarkers(active){
