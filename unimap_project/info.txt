@@ -60,3 +60,6 @@ and add a app install button
 
 
 PWA added working //.
+
+===========improving the GPS signal==========
+......
