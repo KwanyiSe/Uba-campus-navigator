@@ -256,7 +256,7 @@ button:active, .popup-btn:active {
     <h2>About the Developer</h2>
     <p>
       Developed by <b>Kwanyi Sedrick Bodeh</b><br>
-      <span style="opacity:0.6;">sedrickbodeh654@gmail.com</span>
+      <span style="opacity:0.6;">sedrickbodeh654@gmail.com +237654717023</span>
     </p>
     <button id="closeAbout" class="popup-btn">Close</button>
   </div>
@@ -402,9 +402,8 @@ document.getElementById("searchBtn").onclick = () => {
 };
 
 /* ===============================
-   GPS ENGINE (Apple / Google style)
+   GPS engine
 ================================ */
-
 let userMarker = null;
 let accuracyCircle = null;
 
@@ -412,12 +411,11 @@ let lastGoodPos = null;
 let lastTimestamp = null;
 
 const positionBuffer = [];
-const BUFFER_SIZE = 6;
+const BUFFER_SIZE = 3;   // smaller buffer for faster response
 
 /* ===============================
    START GPS
 ================================ */
-
 map.locate({
   watch: true,
   enableHighAccuracy: true,
@@ -428,13 +426,12 @@ map.locate({
 /* ===============================
    GPS VALIDATION
 ================================ */
-
 function isValidGPS(newPos, accuracy, timestamp) {
   const isLaptop = !("ontouchstart" in window);
 
   // Accuracy rules
-  if (!isLaptop && accuracy > 25) return false;   // phone
-  if (isLaptop && accuracy > 120) return false;   // laptop
+  if (!isLaptop && accuracy > 50) return false;   // setting the max accuracy value to 50
+  if (isLaptop && accuracy > 150) return false;   // setting the max acuracu value to 150
 
   if (!lastGoodPos) return true;
 
@@ -445,8 +442,8 @@ function isValidGPS(newPos, accuracy, timestamp) {
 
   const speed = distance / timeDiff;
 
-  // Speed filter (humans don't teleport)
-  if (!isLaptop && speed > 4) return false;
+  // Speed filter (humans don’t teleport)
+  if (!isLaptop && speed > 6) return false;
 
   return true;
 }
@@ -454,16 +451,13 @@ function isValidGPS(newPos, accuracy, timestamp) {
 /* ===============================
    SMOOTH POSITION
 ================================ */
-
 function smoothPosition(pos) {
   positionBuffer.push(pos);
   if (positionBuffer.length > BUFFER_SIZE) {
     positionBuffer.shift();
   }
 
-  let lat = 0;
-  let lng = 0;
-
+  let lat = 0, lng = 0;
   positionBuffer.forEach(p => {
     lat += p.lat;
     lng += p.lng;
@@ -478,21 +472,19 @@ function smoothPosition(pos) {
 /* ===============================
    PREDICT MOTION
 ================================ */
-
 function predictPosition(prev, current) {
   return L.latLng(
-    current.lat + (current.lat - prev.lat) * 0.35,
-    current.lng + (current.lng - prev.lng) * 0.35
+    current.lat + (current.lat - prev.lat) * 0.25,
+    current.lng + (current.lng - prev.lng) * 0.25
   );
 }
 
 /* ===============================
    LOCATION UPDATE
 ================================ */
-
 map.on("locationfound", e => {
   const rawPos = e.latlng;
-  let accuracy = e.accuracy || 999;   // MUST be let
+  let accuracy = e.accuracy || 999;
   const timestamp = e.timestamp;
 
   const isLaptop = !("ontouchstart" in window);
@@ -506,8 +498,7 @@ map.on("locationfound", e => {
   if (!isValidGPS(rawPos, accuracy, timestamp)) return;
 
   // Smooth + predict
-  let processedPos = smoothPosition(rawPos);
-
+  let processedPos = (!lastGoodPos) ? rawPos : smoothPosition(rawPos);
   if (lastGoodPos) {
     processedPos = predictPosition(lastGoodPos, processedPos);
   }
@@ -531,6 +522,7 @@ map.on("locationfound", e => {
       interactive: false
     }).addTo(map);
 
+    // Center map immediately on first fix
     map.flyTo(processedPos, 17, {
       animate: true,
       duration: 1
@@ -549,7 +541,6 @@ map.on("locationfound", e => {
 /* ===============================
    ERROR HANDLING
 ================================ */
-
 map.on("locationerror", e => {
   console.warn("Location error:", e.message);
 });
@@ -634,6 +625,16 @@ stopBtn.onclick = () => {
   restoreMarkerStyles();
   showToast("Navigation cleared");
 };
+
+document.getElementById("locateBtn").addEventListener("click", () => {
+  map.locate({
+    setView: true,       // centers map immediately
+    watch: true,
+    enableHighAccuracy: true,
+    maximumAge: 0,
+    timeout: 15000
+  });
+});
 
 /* TOAST */
 function showToast(msg){
