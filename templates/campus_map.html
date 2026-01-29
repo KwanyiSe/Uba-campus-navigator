@@ -401,26 +401,159 @@ document.getElementById("searchBtn").onclick = () => {
   focusBuilding(found.marker, found.lat, found.lng);
 };
 
-/* USER LOCATION */
+/* ===============================
+   GPS ENGINE (Apple / Google style)
+================================ */
+
 let userMarker = null;
+let accuracyCircle = null;
+
+let lastGoodPos = null;
+let lastTimestamp = null;
+
+const positionBuffer = [];
+const BUFFER_SIZE = 6;
+
+/* ===============================
+   START GPS
+================================ */
+
+map.locate({
+  watch: true,
+  enableHighAccuracy: true,
+  maximumAge: 0,
+  timeout: 15000
+});
+
+/* ===============================
+   GPS VALIDATION
+================================ */
+
+function isValidGPS(newPos, accuracy, timestamp) {
+  const isLaptop = !("ontouchstart" in window);
+
+  // Accuracy rules
+  if (!isLaptop && accuracy > 25) return false;   // phone
+  if (isLaptop && accuracy > 120) return false;   // laptop
+
+  if (!lastGoodPos) return true;
+
+  const distance = map.distance(lastGoodPos, newPos);
+  const timeDiff = (timestamp - lastTimestamp) / 1000;
+
+  if (timeDiff <= 0) return false;
+
+  const speed = distance / timeDiff;
+
+  // Speed filter (humans don't teleport)
+  if (!isLaptop && speed > 4) return false;
+
+  return true;
+}
+
+/* ===============================
+   SMOOTH POSITION
+================================ */
+
+function smoothPosition(pos) {
+  positionBuffer.push(pos);
+  if (positionBuffer.length > BUFFER_SIZE) {
+    positionBuffer.shift();
+  }
+
+  let lat = 0;
+  let lng = 0;
+
+  positionBuffer.forEach(p => {
+    lat += p.lat;
+    lng += p.lng;
+  });
+
+  return L.latLng(
+    lat / positionBuffer.length,
+    lng / positionBuffer.length
+  );
+}
+
+/* ===============================
+   PREDICT MOTION
+================================ */
+
+function predictPosition(prev, current) {
+  return L.latLng(
+    current.lat + (current.lat - prev.lat) * 0.35,
+    current.lng + (current.lng - prev.lng) * 0.35
+  );
+}
+
+/* ===============================
+   LOCATION UPDATE
+================================ */
+
 map.on("locationfound", e => {
-  if(!userMarker){
-    userMarker = L.marker(e.latlng, {
-      icon:L.icon({
-        iconUrl:"https://cdn-icons-png.flaticon.com/512/684/684908.png",
-        iconSize:[36,36], iconAnchor:[18,18]
+  const rawPos = e.latlng;
+  let accuracy = e.accuracy || 999;   // MUST be let
+  const timestamp = e.timestamp;
+
+  const isLaptop = !("ontouchstart" in window);
+
+  // Relax accuracy on laptops
+  if (isLaptop && accuracy > 100) {
+    accuracy = 80;
+  }
+
+  // Validate GPS
+  if (!isValidGPS(rawPos, accuracy, timestamp)) return;
+
+  // Smooth + predict
+  let processedPos = smoothPosition(rawPos);
+
+  if (lastGoodPos) {
+    processedPos = predictPosition(lastGoodPos, processedPos);
+  }
+
+  // Create marker
+  if (!userMarker) {
+    userMarker = L.marker(processedPos, {
+      icon: L.icon({
+        iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
       })
     }).addTo(map);
-  } else {
-    userMarker.setLatLng(e.latlng);
-  }
-});
-map.locate({watch:true,enableHighAccuracy:true});
 
-document.getElementById("locateBtn").onclick = () => {
-  if(!userMarker){ showToast("Location not ready"); return; }
-  map.setView(userMarker.getLatLng(), 18);
-};
+    accuracyCircle = L.circle(processedPos, {
+      radius: accuracy,
+      color: "#60a5fa",
+      fillColor: "#60a5fa",
+      fillOpacity: 0.15,
+      weight: 2,
+      interactive: false
+    }).addTo(map);
+
+    map.flyTo(processedPos, 17, {
+      animate: true,
+      duration: 1
+    });
+
+  } else {
+    userMarker.setLatLng(processedPos);
+    accuracyCircle.setLatLng(processedPos);
+    accuracyCircle.setRadius(accuracy);
+  }
+
+  lastGoodPos = processedPos;
+  lastTimestamp = timestamp;
+});
+
+/* ===============================
+   ERROR HANDLING
+================================ */
+
+map.on("locationerror", e => {
+  console.warn("Location error:", e.message);
+});
+
 
 /* ROUTING */
 let routeStart = null;
