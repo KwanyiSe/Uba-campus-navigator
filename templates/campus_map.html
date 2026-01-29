@@ -256,7 +256,7 @@ button:active, .popup-btn:active {
     <h2>About the Developer</h2>
     <p>
       Developed by <b>Kwanyi Sedrick Bodeh</b><br>
-      <span style="opacity:0.6;">sedrickbodeh654@gmail.com</span>
+      <span style="opacity:0.6;">sedrickbodeh654@gmail.com, +237654717023</span>
     </p>
     <button id="closeAbout" class="popup-btn">Close</button>
   </div>
@@ -402,7 +402,11 @@ document.getElementById("searchBtn").onclick = () => {
 };
 
 /* ===============================
-   GPS ENGINE (Apple / Google style)
+   GPS ENGINE THE KEY MAIN AND MOST IMPORTANT FEATURE  OF THE SOFTWARE
+================================ */
+/* ===============================
+   GPS ENGINE (Production-ready)
+   Google / Apple style
 ================================ */
 
 let userMarker = null;
@@ -412,11 +416,10 @@ let lastGoodPos = null;
 let lastTimestamp = null;
 
 const positionBuffer = [];
-const BUFFER_SIZE = 6;
+let BUFFER_SIZE = 3; // fast initial response
 
-/* ===============================
-   START GPS
-================================ */
+/* START GPS (background tracking only) */
+showToast("Finding your location…");
 
 map.locate({
   watch: true,
@@ -425,36 +428,30 @@ map.locate({
   timeout: 15000
 });
 
-/* ===============================
-   GPS VALIDATION
-================================ */
-
+/* GPS VALIDATION */
 function isValidGPS(newPos, accuracy, timestamp) {
   const isLaptop = !("ontouchstart" in window);
 
-  // Accuracy rules
-  if (!isLaptop && accuracy > 25) return false;   // phone
-  if (isLaptop && accuracy > 120) return false;   // laptop
+  // FIRST  allow rough lock
+  if (!lastGoodPos && accuracy > 120) return false;
+
+  // AFTER LOCK  be strict note this help the speed of user location marker
+  if (lastGoodPos && !isLaptop && accuracy > 25) return false;
+  if (lastGoodPos && isLaptop && accuracy > 120) return false;
 
   if (!lastGoodPos) return true;
 
   const distance = map.distance(lastGoodPos, newPos);
   const timeDiff = (timestamp - lastTimestamp) / 1000;
-
   if (timeDiff <= 0) return false;
 
   const speed = distance / timeDiff;
-
-  // Speed filter (humans don't teleport)
   if (!isLaptop && speed > 4) return false;
 
   return true;
 }
 
-/* ===============================
-   SMOOTH POSITION
-================================ */
-
+/* SMOOTH POSITION */
 function smoothPosition(pos) {
   positionBuffer.push(pos);
   if (positionBuffer.length > BUFFER_SIZE) {
@@ -475,10 +472,7 @@ function smoothPosition(pos) {
   );
 }
 
-/* ===============================
-   PREDICT MOTION
-================================ */
-
+/* PREDICT MOTION */
 function predictPosition(prev, current) {
   return L.latLng(
     current.lat + (current.lat - prev.lat) * 0.35,
@@ -486,21 +480,16 @@ function predictPosition(prev, current) {
   );
 }
 
-/* ===============================
-   LOCATION UPDATE
-================================ */
-
+/* LOCATION UPDATE */
 map.on("locationfound", e => {
   const rawPos = e.latlng;
-  let accuracy = e.accuracy || 999;   // MUST be let
+  let accuracy = e.accuracy || 999;
   const timestamp = e.timestamp;
 
   const isLaptop = !("ontouchstart" in window);
 
-  // Relax accuracy on laptops
-  if (isLaptop && accuracy > 100) {
-    accuracy = 80;
-  }
+  // Relax laptop accuracy
+  if (isLaptop && accuracy > 100) accuracy = 80;
 
   // Validate GPS
   if (!isValidGPS(rawPos, accuracy, timestamp)) return;
@@ -509,11 +498,14 @@ map.on("locationfound", e => {
   let processedPos = smoothPosition(rawPos);
 
   if (lastGoodPos) {
+    BUFFER_SIZE = 6; // tighten smoothing after lock
     processedPos = predictPosition(lastGoodPos, processedPos);
   }
 
-  // Create marker
+  // CREATE MARKER
   if (!userMarker) {
+    showToast("Location locked");
+
     userMarker = L.marker(processedPos, {
       icon: L.icon({
         iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
@@ -523,36 +515,46 @@ map.on("locationfound", e => {
     }).addTo(map);
 
     accuracyCircle = L.circle(processedPos, {
-      radius: accuracy,
+      radius: Math.max(accuracy, 35), // bigger on phones
       color: "#60a5fa",
       fillColor: "#60a5fa",
-      fillOpacity: 0.15,
+      fillOpacity: 0.18,
       weight: 2,
       interactive: false
     }).addTo(map);
 
-    map.flyTo(processedPos, 17, {
-      animate: true,
-      duration: 1
-    });
-
   } else {
     userMarker.setLatLng(processedPos);
     accuracyCircle.setLatLng(processedPos);
-    accuracyCircle.setRadius(accuracy);
+    accuracyCircle.setRadius(Math.max(accuracy, 35));
   }
 
   lastGoodPos = processedPos;
   lastTimestamp = timestamp;
 });
 
-/* ===============================
-   ERROR HANDLING
-================================ */
-
+/* ERROR HANDLING */
 map.on("locationerror", e => {
-  console.warn("Location error:", e.message);
+  console.warn("GPS error:", e.message);
+  showToast("Location unavailable");
 });
+
+
+/* LOCATE ME BUTTON */
+const locateBtn = document.getElementById("locateBtn");
+
+locateBtn.onclick = () => {
+  if (!userMarker) {
+    showToast("Getting GPS signal...");
+    return;
+  }
+
+  map.flyTo(userMarker.getLatLng(), 18, {
+    animate: true,
+    duration: 1
+  });
+};
+
 
 
 /* ROUTING */
@@ -692,8 +694,6 @@ installBtn.onclick = async () => {
   deferredPrompt = null;
   installBtn.style.display = "none";
 };
-
-
 
 </script>
 
