@@ -293,6 +293,33 @@ button:active, .popup-btn:active {
 const API_URL = "/api/buildings/";
 const ROUTE_URL = "/api/route/";
 
+
+// auto unlock handler for automatically allowing gps compas for ios and andriod
+let compassStarted = false;
+
+function tryAutoEnableCompass() {
+  if (compassStarted) return;
+
+  if (
+    typeof DeviceOrientationEvent !== "undefined" &&
+    typeof DeviceOrientationEvent.requestPermission === "function"
+  ) {
+    // iOS will reject unless user interacted
+    DeviceOrientationEvent.requestPermission()
+      .then(permission => {
+        if (permission === "granted") {
+          startCompass();
+          compassStarted = true;
+        }
+      })
+      .catch(() => {});
+  } else {
+    // Android / Chrome
+    startCompass();
+    compassStarted = true;
+  }
+}
+
 /* MAP INIT */
 const map = L.map("map", { zoomControl: true }).setView([6.011, 10.2595], 17);
 
@@ -460,11 +487,29 @@ function startCompass() {
   );
 }
 
-
-function rotateUserArrow(deg) {
+let lastHeading = null;
+function rotateUserArrow(rawHeading) {
   const arrow = document.querySelector(".user-heading");
   if (!arrow) return;
-  arrow.style.transform = `translateX(-50%) rotate(${deg}deg)`;
+
+  // Reverse direction (fix opposite rotation)
+  let heading = 360 - rawHeading;
+
+  // Normalize
+  if (lastHeading !== null) {
+    let delta = heading - lastHeading;
+
+    // Fix jump between 359° → 0°
+    if (delta > 180) heading -= 360;
+    if (delta < -180) heading += 360;
+
+    // Smooth interpolation (Apple-style)
+    heading = lastHeading + delta * 0.15;
+  }
+
+  lastHeading = heading;
+
+  arrow.style.transform = `translateX(-50%) rotate(${heading}deg)`;
 }
 
 /* START GPS (background tracking only) */
@@ -791,33 +836,6 @@ installBtn.onclick = async () => {
   deferredPrompt = null;
   installBtn.style.display = "none";
 };
-
-// auto unlock handler for automatically allowing gps compas for ios and andriod
-
-let compassStarted = false;
-
-function tryAutoEnableCompass() {
-  if (compassStarted) return;
-
-  if (
-    typeof DeviceOrientationEvent !== "undefined" &&
-    typeof DeviceOrientationEvent.requestPermission === "function"
-  ) {
-    // iOS will reject unless user interacted
-    DeviceOrientationEvent.requestPermission()
-      .then(permission => {
-        if (permission === "granted") {
-          startCompass();
-          compassStarted = true;
-        }
-      })
-      .catch(() => {});
-  } else {
-    // Android / Chrome
-    startCompass();
-    compassStarted = true;
-  }
-}
 
 </script>
 
