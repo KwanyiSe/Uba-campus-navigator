@@ -293,38 +293,8 @@ button:active, .popup-btn:active {
 const API_URL = "/api/buildings/";
 const ROUTE_URL = "/api/route/";
 
-
-// auto unlock handler for automatically allowing gps compas for ios and andriod
-let compassStarted = false;
-
-function tryAutoEnableCompass() {
-  if (compassStarted) return;
-
-  if (
-    typeof DeviceOrientationEvent !== "undefined" &&
-    typeof DeviceOrientationEvent.requestPermission === "function"
-  ) {
-    // iOS will reject unless user interacted
-    DeviceOrientationEvent.requestPermission()
-      .then(permission => {
-        if (permission === "granted") {
-          startCompass();
-          compassStarted = true;
-        }
-      })
-      .catch(() => {});
-  } else {
-    // Android / Chrome
-    startCompass();
-    compassStarted = true;
-  }
-}
-
 /* MAP INIT */
 const map = L.map("map", { zoomControl: true }).setView([6.011, 10.2595], 17);
-
-// Try to enable compass automatically (works instantly on Android)
-tryAutoEnableCompass();
 
 const satellite = L.tileLayer(
   "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", { maxZoom:20 }
@@ -459,59 +429,121 @@ document.getElementById("searchBtn").onclick = () => {
    GPS ENGINE THE KEY MAIN AND MOST IMPORTANT FEATURE  OF THE SOFTWARE
 ================================ */
 
+/* ===============================
+   COMPASS ENGINE
+================================ */
+
+let currentHeading = null;
+let targetHeading = null;
+let compassStarted = false;
 let userMarker = null;
 let accuracyCircle = null;
-
 let lastGoodPos = null;
 let lastTimestamp = null;
-
 const positionBuffer = [];
-let BUFFER_SIZE = 3; // fast initial response
 
-/* DEVICE HEADING (Compass) */
-let heading = null;
+
+/* Normalize angle to 0–360 */
+function normalizeAngle(angle) {
+  return (angle + 360) % 360;
+}
+
+/* Shortest rotation path */
+function shortestAngleDiff(from, to) {
+  let diff = to - from;
+  if (diff > 180) diff -= 360;
+  if (diff < -180) diff += 360;
+  return diff;
+}
 
 function startCompass() {
+  if (compassStarted) return;
+  compassStarted = true;
+
   window.addEventListener(
     "deviceorientation",
-    e => {
-      if (e.alpha === null) return;
-
-      // Normalize heading (0–360)
-      let compassHeading = 360 - e.alpha;
-
-      heading = compassHeading;
-      rotateUserArrow(heading);
-    },
+    handleOrientation,
     true
   );
 }
 
-let lastHeading = null;
-function rotateUserArrow(rawHeading) {
-  const arrow = document.querySelector(".user-heading");
-  if (!arrow) return;
+function handleOrientation(e) {
+  if (e.alpha === null) return;
 
-  // Reverse direction (fix opposite rotation)
-  let heading = 360 - rawHeading;
+  let rawHeading;
 
-  // Normalize
-  if (lastHeading !== null) {
-    let delta = heading - lastHeading;
-
-    // Fix jump between 359° → 0°
-    if (delta > 180) heading -= 360;
-    if (delta < -180) heading += 360;
-
-    // Smooth interpolation (Apple-style)
-    heading = lastHeading + delta * 0.15;
+  // iOS (true compass heading)
+  if (typeof e.webkitCompassHeading === "number") {
+    rawHeading = e.webkitCompassHeading;
+  } else {
+    // Android: invert + normalize
+    rawHeading = 360 - e.alpha;
   }
 
-  lastHeading = heading;
+  rawHeading = normalizeAngle(rawHeading);
 
-  arrow.style.transform = `translateX(-50%) rotate(${heading}deg)`;
+  // Ignore tiny jitter when standing still
+  if (
+    targetHeading !== null &&
+    Math.abs(shortestAngleDiff(targetHeading, rawHeading)) < 2
+  ) {
+    return;
+  }
+
+  targetHeading = rawHeading;
+
+  if (currentHeading === null) {
+    currentHeading = targetHeading;
+    animateHeading();
+  }
 }
 
+function animateHeading() {
+  const arrow = document.querySelector(".user-heading");
+  if (!arrow) {
+    requestAnimationFrame(animateHeading);
+    return;
+  }
+
+  const smoothing = 0.045; // slow + precise
+  const diff = shortestAngleDiff(currentHeading, targetHeading);
+
+  currentHeading = normalizeAngle(
+    currentHeading + diff * smoothing
+  );
+
+  arrow.style.transform =
+    `translateX(-50%) rotate(${currentHeading}deg)`;
+
+  requestAnimationFrame(animateHeading);
+}
+
+// auto unlock handler for automatically allowing gps compas for ios and andriod
+function tryAutoEnableCompass() {
+  if (compassStarted) return;
+
+  if (
+    typeof DeviceOrientationEvent !== "undefined" &&
+    typeof DeviceOrientationEvent.requestPermission === "function"
+  ) {
+    // iOS will reject unless user interacted
+    DeviceOrientationEvent.requestPermission()
+      .then(permission => {
+        if (permission === "granted") {
+          startCompass();
+          compassStarted = true;
+        }
+      })
+      .catch(() => {});
+  } else {
+    // Android / Chrome
+    startCompass();
+    compassStarted = true;
+  }
+}
+
+
+let BUFFER_SIZE = 3; // fast initial response
 /* START GPS (background tracking only) */
 showToast("Finding your location…");
 
@@ -654,8 +686,6 @@ map.on("locationerror", e => {
 });
 
 
-
-
 /* LOCATE ME BUTTON */
 const locateBtn = document.getElementById("locateBtn");
 
@@ -673,30 +703,6 @@ locateBtn.onclick = () => {
     duration: 1
   });
 };
-
-//enable compas on IOS and Andriod devices
-function enableCompass() {
-  if (
-    typeof DeviceOrientationEvent !== "undefined" &&
-    typeof DeviceOrientationEvent.requestPermission === "function"
-  ) {
-    // iOS
-    DeviceOrientationEvent.requestPermission()
-      .then(permission => {
-        if (permission === "granted") {
-          startCompass();
-          showToast("Compass enabled");
-        } else {
-          showToast("Compass permission denied");
-        }
-      })
-      .catch(() => showToast("Compass unavailable"));
-  } else {
-    // Android / others
-    startCompass();
-  }
-}
-
 
 
 /* ROUTING */
