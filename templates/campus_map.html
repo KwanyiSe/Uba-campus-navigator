@@ -296,6 +296,9 @@ const ROUTE_URL = "/api/route/";
 /* MAP INIT */
 const map = L.map("map", { zoomControl: true }).setView([6.011, 10.2595], 17);
 
+// Try to enable compass automatically (works instantly on Android)
+tryAutoEnableCompass();
+
 const satellite = L.tileLayer(
   "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", { maxZoom:20 }
 ).addTo(map);
@@ -441,14 +444,22 @@ let BUFFER_SIZE = 3; // fast initial response
 /* DEVICE HEADING (Compass) */
 let heading = null;
 
-if (window.DeviceOrientationEvent) {
-  window.addEventListener("deviceorientationabsolute", e => {
-    if (e.alpha !== null) {
-      heading = e.alpha;
+function startCompass() {
+  window.addEventListener(
+    "deviceorientation",
+    e => {
+      if (e.alpha === null) return;
+
+      // Normalize heading (0–360)
+      let compassHeading = 360 - e.alpha;
+
+      heading = compassHeading;
       rotateUserArrow(heading);
-    }
-  });
+    },
+    true
+  );
 }
+
 
 function rotateUserArrow(deg) {
   const arrow = document.querySelector(".user-heading");
@@ -583,14 +594,30 @@ map.on("locationfound", e => {
 /* ERROR HANDLING */
 map.on("locationerror", e => {
   console.warn("GPS error:", e.message);
-  showToast("Location unavailable");
+  showToast("waiting for location");
 });
+
+// iOS requires user interaction to unlock compass so adding a handler for that
+["click", "touchstart"].forEach(evt => {
+  window.addEventListener(
+    evt,
+    () => {
+      tryAutoEnableCompass();
+    },
+    { once: true }
+  );
+});
+
+
 
 
 /* LOCATE ME BUTTON */
 const locateBtn = document.getElementById("locateBtn");
 
 locateBtn.onclick = () => {
+
+  tryAutoEnableCompass(); //enabling device compass when click locate me
+
   if (!userMarker) {
     showToast("Getting GPS signal...");
     return;
@@ -601,6 +628,29 @@ locateBtn.onclick = () => {
     duration: 1
   });
 };
+
+//enable compas on IOS and Andriod devices
+function enableCompass() {
+  if (
+    typeof DeviceOrientationEvent !== "undefined" &&
+    typeof DeviceOrientationEvent.requestPermission === "function"
+  ) {
+    // iOS
+    DeviceOrientationEvent.requestPermission()
+      .then(permission => {
+        if (permission === "granted") {
+          startCompass();
+          showToast("Compass enabled");
+        } else {
+          showToast("Compass permission denied");
+        }
+      })
+      .catch(() => showToast("Compass unavailable"));
+  } else {
+    // Android / others
+    startCompass();
+  }
+}
 
 
 
@@ -741,6 +791,33 @@ installBtn.onclick = async () => {
   deferredPrompt = null;
   installBtn.style.display = "none";
 };
+
+// auto unlock handler for automatically allowing gps compas for ios and andriod
+
+let compassStarted = false;
+
+function tryAutoEnableCompass() {
+  if (compassStarted) return;
+
+  if (
+    typeof DeviceOrientationEvent !== "undefined" &&
+    typeof DeviceOrientationEvent.requestPermission === "function"
+  ) {
+    // iOS will reject unless user interacted
+    DeviceOrientationEvent.requestPermission()
+      .then(permission => {
+        if (permission === "granted") {
+          startCompass();
+          compassStarted = true;
+        }
+      })
+      .catch(() => {});
+  } else {
+    // Android / Chrome
+    startCompass();
+    compassStarted = true;
+  }
+}
 
 </script>
 
