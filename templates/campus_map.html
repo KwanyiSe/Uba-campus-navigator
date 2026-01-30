@@ -195,6 +195,30 @@ button:active, .popup-btn:active {
 .about-content h2{ margin-top:0; }
 .about-content a{ color:#3b82f6;font-weight:600; }
 
+/* USER LOCATION (Apple map style)*/
+.user-location {
+  width: 18px;
+  height: 18px;
+  background: #1e90ff;
+  border-radius: 50%;
+  position: relative;
+  box-shadow: 0 0 0 6px rgba(30,144,255,0.25);
+}
+
+.user-heading {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%) rotate(0deg);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 12px solid #1e90ff;
+  transform-origin: center 18px;
+  transition: transform 0.15s linear;
+}
+
 
 </style>
 </head>
@@ -256,7 +280,7 @@ button:active, .popup-btn:active {
     <h2>About the Developer</h2>
     <p>
       Developed by <b>Kwanyi Sedrick Bodeh</b><br>
-      <span style="opacity:0.6;">sedrickbodeh654@gmail.com, +237654717023</span>
+      <span style="opacity:0.6;">sedrickbodeh654@gmail.com +237654717023</span>
     </p>
     <button id="closeAbout" class="popup-btn">Close</button>
   </div>
@@ -404,10 +428,6 @@ document.getElementById("searchBtn").onclick = () => {
 /* ===============================
    GPS ENGINE THE KEY MAIN AND MOST IMPORTANT FEATURE  OF THE SOFTWARE
 ================================ */
-/* ===============================
-   GPS ENGINE (Production-ready)
-   Google / Apple style
-================================ */
 
 let userMarker = null;
 let accuracyCircle = null;
@@ -417,6 +437,24 @@ let lastTimestamp = null;
 
 const positionBuffer = [];
 let BUFFER_SIZE = 3; // fast initial response
+
+/* DEVICE HEADING (Compass) */
+let heading = null;
+
+if (window.DeviceOrientationEvent) {
+  window.addEventListener("deviceorientationabsolute", e => {
+    if (e.alpha !== null) {
+      heading = e.alpha;
+      rotateUserArrow(heading);
+    }
+  });
+}
+
+function rotateUserArrow(deg) {
+  const arrow = document.querySelector(".user-heading");
+  if (!arrow) return;
+  arrow.style.transform = `translateX(-50%) rotate(${deg}deg)`;
+}
 
 /* START GPS (background tracking only) */
 showToast("Finding your location…");
@@ -432,10 +470,10 @@ map.locate({
 function isValidGPS(newPos, accuracy, timestamp) {
   const isLaptop = !("ontouchstart" in window);
 
-  // FIRST  allow rough lock
+  // FIRST  allow rough location for fast loading the later filter it 
   if (!lastGoodPos && accuracy > 120) return false;
 
-  // AFTER LOCK  be strict note this help the speed of user location marker
+  // AFTER LOCK  be strict note this help the speed of user location markerb
   if (lastGoodPos && !isLaptop && accuracy > 25) return false;
   if (lastGoodPos && isLaptop && accuracy > 120) return false;
 
@@ -506,14 +544,23 @@ map.on("locationfound", e => {
   if (!userMarker) {
     showToast("Location locked");
 
+    const userIcon = L.divIcon({
+      className: "",
+      html: `
+        <div class="user-location">
+          <div class="user-heading"></div>
+        </div>
+      `,
+      iconSize: [18, 18],
+      iconAnchor: [9, 9]
+    });
+
     userMarker = L.marker(processedPos, {
-      icon: L.icon({
-        iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
-        iconSize: [32, 32],
-        iconAnchor: [16, 16]
-      })
+      icon: userIcon,
+      interactive: false
     }).addTo(map);
 
+    // accuracy circle
     accuracyCircle = L.circle(processedPos, {
       radius: Math.max(accuracy, 35), // bigger on phones
       color: "#60a5fa",
