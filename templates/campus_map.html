@@ -488,12 +488,11 @@ function handleOrientation(event) {
     lastHeading = heading;
   } else {
     const diff = ((heading - lastHeading + 540) % 360) - 180;
-    lastHeading = lastHeading + diff * 0.12; // 🔥 slower & precise
+    lastHeading = lastHeading + diff * 0.21; // slower & precise
   }
 
   rotateUserArrow(lastHeading);
 }
-
 
 // keep the arrow center when phone is straight
 function rotateUserArrow(deg) {
