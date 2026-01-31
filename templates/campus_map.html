@@ -209,15 +209,17 @@ button:active, .popup-btn:active {
   position: absolute;
   top: -14px;
   left: 50%;
-  transform: translateX(-50%) rotate(0deg);
   width: 0;
   height: 0;
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
   border-bottom: 12px solid #1e90ff;
+
   transform-origin: center 18px;
-  transition: transform 0.15s linear;
+  transform: translateX(-50%) rotate(0deg);
+  transition: transform 0.25s linear; /* slower  */
 }
+
 
 
 </style>
@@ -433,90 +435,13 @@ document.getElementById("searchBtn").onclick = () => {
    COMPASS ENGINE
 ================================ */
 
-let currentHeading = null;
-let targetHeading = null;
+let lastHeading = null;
 let compassStarted = false;
 let userMarker = null;
 let accuracyCircle = null;
 let lastGoodPos = null;
 let lastTimestamp = null;
 const positionBuffer = [];
-
-
-/* Normalize angle to 0–360 */
-function normalizeAngle(angle) {
-  return (angle + 360) % 360;
-}
-
-/* Shortest rotation path */
-function shortestAngleDiff(from, to) {
-  let diff = to - from;
-  if (diff > 180) diff -= 360;
-  if (diff < -180) diff += 360;
-  return diff;
-}
-
-function startCompass() {
-  if (compassStarted) return;
-  compassStarted = true;
-
-  window.addEventListener(
-    "deviceorientation",
-    handleOrientation,
-    true
-  );
-}
-
-function handleOrientation(e) {
-  if (e.alpha === null) return;
-
-  let rawHeading;
-
-  // iOS (true compass heading)
-  if (typeof e.webkitCompassHeading === "number") {
-    rawHeading = e.webkitCompassHeading;
-  } else {
-    // Android: invert + normalize
-    rawHeading = 360 - e.alpha;
-  }
-
-  rawHeading = normalizeAngle(rawHeading);
-
-  // Ignore tiny jitter when standing still
-  if (
-    targetHeading !== null &&
-    Math.abs(shortestAngleDiff(targetHeading, rawHeading)) < 2
-  ) {
-    return;
-  }
-
-  targetHeading = rawHeading;
-
-  if (currentHeading === null) {
-    currentHeading = targetHeading;
-    animateHeading();
-  }
-}
-
-function animateHeading() {
-  const arrow = document.querySelector(".user-heading");
-  if (!arrow) {
-    requestAnimationFrame(animateHeading);
-    return;
-  }
-
-  const smoothing = 0.045; // slow + precise
-  const diff = shortestAngleDiff(currentHeading, targetHeading);
-
-  currentHeading = normalizeAngle(
-    currentHeading + diff * smoothing
-  );
-
-  arrow.style.transform =
-    `translateX(-50%) rotate(${currentHeading}deg)`;
-
-  requestAnimationFrame(animateHeading);
-}
 
 // auto unlock handler for automatically allowing gps compas for ios and andriod
 function tryAutoEnableCompass() {
@@ -542,9 +467,51 @@ function tryAutoEnableCompass() {
   }
 }
 
+function handleOrientation(event) {
+  let heading = null;
+
+  // iOS
+  if (event.webkitCompassHeading !== undefined) {
+    heading = event.webkitCompassHeading;
+  }
+  // Android / others
+  else if (event.absolute && event.alpha !== null) {
+    heading = 360 - event.alpha;
+  }
+
+  if (heading === null) return;
+
+  heading = (heading + 360) % 360;
+
+  // smoothing (low-pass filter)
+  if (lastHeading === null) {
+    lastHeading = heading;
+  } else {
+    const diff = ((heading - lastHeading + 540) % 360) - 180;
+    lastHeading = lastHeading + diff * 0.12; // 🔥 slower & precise
+  }
+
+  rotateUserArrow(lastHeading);
+}
+
+
+// keep the arrow center when phone is straight
+function rotateUserArrow(deg) {
+  const arrow = document.querySelector(".user-heading");
+  if (!arrow) return;
+
+  arrow.style.transform = `translateX(-50%) rotate(${deg}deg)`;
+}
+
+function startCompass() {
+  if (compassStarted) return;
+
+  window.addEventListener("deviceorientationabsolute", handleOrientation, true);
+  window.addEventListener("deviceorientation", handleOrientation, true);
+}
 
 let BUFFER_SIZE = 3; // fast initial response
-/* START GPS (background tracking only) */
+//START GPS (background tracking only)
 showToast("Finding your location…");
 
 map.locate({
