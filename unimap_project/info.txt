@@ -62,4 +62,6 @@ and add a app install button
 PWA added working //.
 
 ===========improving the GPS signal==========
-......
+...... done
+change user marker to a circle and add a compass now stable 
+moving on....
