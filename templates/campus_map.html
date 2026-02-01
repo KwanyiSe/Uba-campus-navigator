@@ -510,6 +510,12 @@ function startCompass() {
 }
 
 let BUFFER_SIZE = 3; // fast initial response
+
+//ROUTE SNAPPING SETTINGS
+const SNAP_RADIUS = 10;        // meters
+const STOP_SNAP_DISTANCE = 6;  // meters before destination
+
+
 //START GPS (background tracking only)
 showToast("Finding your location…");
 
@@ -517,8 +523,10 @@ map.locate({
   watch: true,
   enableHighAccuracy: true,
   maximumAge: 0,
-  timeout: 15000
+  timeout: 20000,
+  setView: false
 });
+
 
 /* GPS VALIDATION */
 function isValidGPS(newPos, accuracy, timestamp) {
@@ -543,15 +551,26 @@ function isValidGPS(newPos, accuracy, timestamp) {
   return true;
 }
 
-/* SMOOTH POSITION */
+// smooth position
 function smoothPosition(pos) {
+
+  // If user almost not moving → be very strict
+  if (lastGoodPos) {
+    const d = pos.distanceTo(lastGoodPos);
+
+    // Standing still → ignore tiny GPS noise
+    if (d < 1.2) {
+      return lastGoodPos;
+    }
+  }
+
   positionBuffer.push(pos);
+
   if (positionBuffer.length > BUFFER_SIZE) {
     positionBuffer.shift();
   }
 
-  let lat = 0;
-  let lng = 0;
+  let lat = 0, lng = 0;
 
   positionBuffer.forEach(p => {
     lat += p.lat;
@@ -564,12 +583,33 @@ function smoothPosition(pos) {
   );
 }
 
-/* PREDICT MOTION */
+// predict motion
 function predictPosition(prev, current) {
   return L.latLng(
-    current.lat + (current.lat - prev.lat) * 0.35,
-    current.lng + (current.lng - prev.lng) * 0.35
+    current.lat + (current.lat - prev.lat) * 0.18,
+    current.lng + (current.lng - prev.lng) * 0.18
   );
+}
+
+ // getting the nearest route point to snap user marker
+function getNearestPointOnRoute(latlng, routeCoords) {
+  let closest = routeCoords[0];
+  let minDist = latlng.distanceTo(closest);
+
+  for (let i = 1; i < routeCoords.length; i++) {
+    const p = routeCoords[i];
+    const d = latlng.distanceTo(p);
+
+    if (d < minDist) {
+      minDist = d;
+      closest = p;
+    }
+  }
+
+  return {
+    point: closest,
+    distance: minDist
+  };
 }
 
 /* LOCATION UPDATE */
@@ -590,11 +630,36 @@ map.on("locationfound", e => {
   let processedPos = smoothPosition(rawPos);
 
   if (lastGoodPos) {
-    BUFFER_SIZE = 6; // tighten smoothing after lock
+    BUFFER_SIZE = 6;
     processedPos = predictPosition(lastGoodPos, processedPos);
   }
 
-  // CREATE MARKER
+  // route snapping logic
+  if (routeLine) {
+
+    const routeCoords = routeLine.getLatLngs();
+
+    const nearest = getNearestPointOnRoute(processedPos, routeCoords);
+
+    const distanceToEnd =
+      processedPos.distanceTo(routeCoords[routeCoords.length - 1]);
+
+    // GPS changes every second  when its bad snap more if good precise
+    const dynamicSnap = Math.max(SNAP_RADIUS, accuracy * 0.45);
+
+    const shouldSnap =
+      nearest.distance <= dynamicSnap &&
+      distanceToEnd > STOP_SNAP_DISTANCE;
+
+
+    if (shouldSnap) {
+      processedPos = nearest.point;
+    }
+
+  }
+
+
+  // creat marker
   if (!userMarker) {
     showToast("Location locked");
 
