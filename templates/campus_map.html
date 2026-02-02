@@ -509,7 +509,7 @@ function startCompass() {
   window.addEventListener("deviceorientation", handleOrientation, true);
 }
 
-let BUFFER_SIZE = 3; // fast initial response
+let BUFFER_SIZE = 4; // fast initial response
 
 //ROUTE SNAPPING SETTINGS
 const SNAP_RADIUS = 10;        // meters
@@ -629,33 +629,40 @@ map.on("locationfound", e => {
   // Smooth + predict
   let processedPos = smoothPosition(rawPos);
 
+  if (!lastGoodPos && accuracy > 40) {
+  showToast("Improving GPS lock...");
+  return;
+  }
+
+
   if (lastGoodPos) {
-    BUFFER_SIZE = 6;
+    BUFFER_SIZE = 5;
     processedPos = predictPosition(lastGoodPos, processedPos);
   }
 
   // route snapping logic
+
   if (routeLine) {
-
     const routeCoords = routeLine.getLatLngs();
-
     const nearest = getNearestPointOnRoute(processedPos, routeCoords);
 
     const distanceToEnd =
       processedPos.distanceTo(routeCoords[routeCoords.length - 1]);
 
-    // GPS changes every second  when its bad snap more if good precise
-    const dynamicSnap = Math.max(SNAP_RADIUS, accuracy * 0.45);
-
     const shouldSnap =
-      nearest.distance <= dynamicSnap &&
+      nearest.distance <= SNAP_RADIUS &&
       distanceToEnd > STOP_SNAP_DISTANCE;
 
-
     if (shouldSnap) {
-      processedPos = nearest.point;
-    }
 
+      // ONLY snap if movement is significant
+      const moveDelta = processedPos.distanceTo(nearest.point);
+
+      if (moveDelta > 1.2) {
+        processedPos = nearest.point;
+      }
+      // else → keep real GPS so marker keeps flowing
+    }
   }
 
 
@@ -690,7 +697,11 @@ map.on("locationfound", e => {
     }).addTo(map);
 
   } else {
-    userMarker.setLatLng(processedPos);
+    // adding a tiny animation to make it feel alive.
+    userMarker.setLatLng(processedPos, {
+      animate: true,
+      duration: 0.4
+    });
     accuracyCircle.setLatLng(processedPos);
     accuracyCircle.setRadius(Math.max(accuracy, 35));
   }
