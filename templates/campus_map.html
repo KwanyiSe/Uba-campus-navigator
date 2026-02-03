@@ -72,47 +72,117 @@ html,body{
 }
 
 /* ---------------- SEARCH ---------------- */
-#searchContainer{
-  position:fixed;top:66px;left:50%;transform:translateX(-50%);
-  width:calc(100% - 28px);max-width:700px;z-index:10009;
-  display:flex;gap:8px;padding:8px;
+
+#searchContainer {
+  position: fixed;
+  top: 66px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 28px);
+  max-width: 700px;
+  z-index: 10009;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
 }
 
-#searchBox{
-  flex:1;background:#fff;border-radius:12px;padding:6px 8px;
-  display:flex;align-items:center;
-  box-shadow:0 8px 24px rgba(2,6,23,0.4);
+/* Main search box */
+#searchBox {
+  position: relative;
+  flex: 1;
+  background: #fff;
+  border-radius: 14px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 10px 26px rgba(2,6,23,0.32);
 }
 
-#buildingSearch{
-  flex:1;border:0;outline:none;font-size:15px;padding:10px;
-  background:white;color:black;
+/* Real SVG search icon */
+.search-icon svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  stroke: #374151;       /* nice darker gray */
+  opacity: 0.7;
+  margin-left: 6px;
 }
 
-#searchBtn{
-  background:#1f2937;color:#fff;border:none;
-  padding:10px 14px;border-radius:10px;font-weight:700;
-  cursor:pointer;
-  transition:0.15s;
+/* Input field */
+#buildingSearch {
+  flex: 1;
+  border: 0;
+  outline: none;
+  font-size: 15px;
+  padding: 10px 8px;
+  background: white;
+  color: black;
 }
 
-/* -------- MOBILE FIX -------- */
-@media(max-width:480px){
-  #searchContainer{ flex-direction:column; }
-  #searchBtn{ width:100%;padding:12px; }
+/* Darker clear X icon */
+.clear-icon {
+  position: absolute;
+  right: 10px;
+  cursor: pointer;
+  color: #111;           /* almost black */
+  font-weight: bold;
+  font-size: 16px;
+  display: none;         /* shown by JS when typing */
 }
 
-/* AUTOCOMPLETE */
-#suggestions{
-  position:absolute;top:52px;left:8px;right:8px;background:#fff;
-  border-radius:8px;box-shadow:0 6px 18px rgba(2,6,23,0.24);
-  max-height:230px;overflow:auto;display:none;z-index:20000;
+/* Suggestions dropdown */
+#suggestions {
+  position: absolute;
+  top: 52px;
+  left: 8px;
+  right: 8px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.24);
+  max-height: 230px;
+  overflow: auto;
+  display: none;
+  z-index: 20000;
 }
-.suggestion-item{
-  padding:10px 12px;border-bottom:1px solid rgba(0,0,0,0.06);
-  cursor:pointer;font-size:14px;color:#111;
+
+.suggestion-item {
+  padding: 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  cursor: pointer;
+  font-size: 14px;
+  color: #111;
 }
-.suggestion-item:hover{ background:#f3f4f6; }
+
+.suggestion-item:hover {
+  background: #f0f6ff;
+}
+
+/* Search button (desktop only) */
+#searchBtn {
+  background: #1f2937;
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+/* Hide search button on mobile */
+@media (max-width: 768px) {
+  #searchBtn {
+    display: none;
+  }
+}
+
+/* Small screens layout fix */
+@media (max-width: 480px) {
+  #searchContainer {
+    flex-direction: column;
+  }
+}
+
 
 /* MAP */
 #map{
@@ -148,10 +218,14 @@ html,body{
 
 /* ROUTE BOX */
 #routeInfo{
-  position:fixed;left:0;right:0;bottom:0;z-index:10009;
-  background:rgba(2,6,23,0.95);padding:12px 14px;
-  display:none;color:#e6eef8;
+  position:fixed;
+  left:12px;
+  right:12px;
+  bottom:12px;
+  border-radius:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.5);
 }
+
 #routeSteps{
   margin-top:8px;max-height:180px;overflow:auto;
   color:#cfe7ff;font-size:13px;
@@ -246,9 +320,22 @@ button:active, .popup-btn:active {
 <!-- SEARCH -->
 <div id="searchContainer">
   <div id="searchBox">
+    <!-- Real search icon (SVG) -->
+    <span class="search-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+    </span>
+
     <input id="buildingSearch" type="text" placeholder="Search building..." autocomplete="off" />
+
+    <!-- X icon -->
+    <span id="clearSearch" class="clear-icon">✕</span>
+
     <div id="suggestions"></div>
   </div>
+
   <button id="searchBtn">Search</button>
 </div>
 
@@ -382,53 +469,93 @@ fetch(API_URL)
 })
 .catch(() => showToast("Failed loading buildings"));
 
-/* AUTOCOMPLETE */
+//search logic
 const input = document.getElementById("buildingSearch");
 const suggestions = document.getElementById("suggestions");
+const clearBtn = document.getElementById("clearSearch");
 
+/* show / hide X icon */
 input.addEventListener("input", () => {
-  const q = input.value.trim().toLowerCase();
-  if(!q){ suggestions.style.display="none"; return; }
 
-  const match = buildingMarkers.filter(b => b.name.toLowerCase().includes(q)).slice(0,8);
+  clearBtn.style.display =
+    input.value.length > 0 ? "block" : "none";
+
+  const q = input.value.trim().toLowerCase();
+  if(!q){
+    suggestions.style.display="none";
+    return;
+  }
+
+  const match = buildingMarkers
+      .filter(b => b.name.toLowerCase().includes(q))
+      .slice(0,8);
 
   suggestions.innerHTML = "";
+
   match.forEach(m => {
     const div = document.createElement("div");
     div.className="suggestion-item";
     div.innerText=m.name;
+
     div.onclick = () => {
       input.value=m.name;
+      clearBtn.style.display="block";
       suggestions.style.display="none";
 
       dimOtherMarkers(m.marker);
       focusBuilding(m.marker, m.lat, m.lng);
     };
+
     suggestions.appendChild(div);
   });
 
   suggestions.style.display="block";
 });
 
-document.addEventListener("click", e => {
-  if(!document.getElementById("searchContainer").contains(e.target)){
-    suggestions.style.display="none";
+/* clear search */
+clearBtn.onclick = () => {
+  input.value="";
+  clearBtn.style.display="none";
+  suggestions.style.display="none";
+};
+
+/* ENTER KEY SEARCH */
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    triggerSearch();
   }
 });
 
-/* SEARCH BUTTON */
+/* BUTTON SEARCH (laptop) */
 document.getElementById("searchBtn").onclick = () => {
+  triggerSearch();
+};
+
+/* MAIN SEARCH FUNCTION */
+function triggerSearch(){
   const q = input.value.trim().toLowerCase();
-  if(!q){ showToast("Enter a building name"); return; }
-  const found = buildingMarkers.find(b => b.name.toLowerCase() === q);
-  if(!found){ showToast("Building not found"); return; }
+
+  if(!q){
+    showToast("Enter building name");
+    return;
+  }
+
+  const found = buildingMarkers.find(
+    b => b.name.toLowerCase() === q
+  );
+
+  if(!found){
+    showToast("Building not found");
+    return;
+  }
 
   dimOtherMarkers(found.marker);
   focusBuilding(found.marker, found.lat, found.lng);
-};
+}
 
 /* ===============================
-   GPS ENGINE THE KEY MAIN AND MOST IMPORTANT FEATURE  OF THE SOFTWARE
+   GPS ENGINE THE KEY MAIN AND   THE MOST IMPORTANT FEATURE  OF THE SOFTWARE
 ================================ */
 
 /* ===============================
