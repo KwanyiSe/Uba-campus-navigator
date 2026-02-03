@@ -273,10 +273,18 @@ button:active, .popup-btn:active {
 .user-location {
   width: 18px;
   height: 18px;
-  background: #1e90ff;
+
+  /* COLOR */
+  background: white;
+  border: 3px solid #111827;   /* dark border */
+
   border-radius: 50%;
   position: relative;
-  box-shadow: 0 0 0 6px rgba(30,144,255,0.25);
+
+  /* blue halo  */
+  box-shadow: 0 0 0 6px rgba(59,130,246,0.28);
+
+  transition: transform 0.2s ease;
 }
 
 .user-heading {
@@ -287,7 +295,7 @@ button:active, .popup-btn:active {
   height: 0;
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
-  border-bottom: 12px solid #1e90ff;
+  border-bottom: 12px solid #111827;
 
   transform-origin: center 18px;
   transform: translateX(-50%) rotate(0deg);
