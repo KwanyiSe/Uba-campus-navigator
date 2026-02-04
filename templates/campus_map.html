@@ -222,9 +222,14 @@ html,body{
   left:12px;
   right:12px;
   bottom:12px;
+  background:#0f172a;        
+  padding:12px;              
   border-radius:14px;
   box-shadow:0 10px 30px rgba(0,0,0,0.5);
+  display:none;              /* hidden until route starts */
+  z-index:10020;
 }
+
 
 #routeSteps{
   margin-top:8px;max-height:180px;overflow:auto;
@@ -269,39 +274,41 @@ button:active, .popup-btn:active {
 .about-content h2{ margin-top:0; }
 .about-content a{ color:#3b82f6;font-weight:600; }
 
-/* USER LOCATION (Apple map style)*/
+/* USER LOCATION MARKER*/
 .user-location {
   width: 18px;
   height: 18px;
 
-  /* COLOR */
   background: white;
-  border: 3px solid #111827;   /* dark border */
+  border: 3px solid #111827;
 
   border-radius: 50%;
   position: relative;
 
-  /* blue halo  */
   box-shadow: 0 0 0 6px rgba(59,130,246,0.28);
-
-  transition: transform 0.2s ease;
 }
 
+/* triangle in the user marker*/
 .user-heading {
   position: absolute;
-  top: -14px;
+
+  /* place triangle on top edge of circle */
+  top: -6px;
   left: 50%;
+
   width: 0;
   height: 0;
+
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
   border-bottom: 12px solid #111827;
 
-  transform-origin: center 18px;
-  transform: translateX(-50%) rotate(0deg);
-  transition: transform 0.25s linear; /* slower  */
-}
+  /* rotate around circle center*/
+  transform-origin: 50% 15px;
 
+  transform: translateX(-50%) rotate(0deg);
+  transition: transform 0.25s linear;
+}
 
 
 </style>
