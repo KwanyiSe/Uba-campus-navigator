@@ -7,8 +7,16 @@
 
 {% load static %}
 
+<!-- ANDROID PWA Support -->
 <link rel="manifest" href="{% static 'pwa/manifest.json' %}">
 <meta name="theme-color" content="#0d6efd">
+
+<!-- iOS PWA Support -->
+<link rel="apple-touch-icon" href="/static/pwa/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="UBa Map">
+
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -352,6 +360,15 @@ button:active, .popup-btn:active {
   </div>
 
   <button id="searchBtn">Search</button>
+</div>
+
+
+<!-- IPhone user guide-->
+<div id="iosInstall" style="display:none; text-align:center; padding:10px;">
+  <p>
+    📲 To install on iPhone:<br>
+    Tap <b>Share</b> → <b>Add to Home Screen</b>
+  </p>
 </div>
 
 <!-- MAP -->
@@ -1027,6 +1044,19 @@ installBtn.onclick = async () => {
   installBtn.style.display = "none";
 };
 
+//IOS install guid
+function isIos() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
+function isInStandalone() {
+  return ('standalone' in window.navigator) && window.navigator.standalone;
+}
+
+if (isIos() && !isInStandalone()) {
+  document.getElementById("iosInstall").style.display = "block";
+}
+
 </script>
 
 <script>
@@ -1086,16 +1116,15 @@ function restoreMarkerStyles(){
 </script>
 
 <script>
-
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", function () {
-      navigator.serviceWorker.register("{% static 'pwa/service-worker.js' %}")
-        .then(reg => console.log("Service Worker registered"))
-        .catch(err => console.log("Service Worker failed:", err));
-    });
-  }
-
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/static/pwa/service-worker.js')
+      .then(() => console.log('SW registered'))
+      .catch(err => console.log('SW error:', err));
+  });
+}
 </script>
+
 
 </body>
 </html>
