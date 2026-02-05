@@ -493,6 +493,17 @@ map.on("resize", () => {
   map.invalidateSize({ animate: false });
 });
 
+// reset markers if user tap the map when the popup is on
+map.on("click", () => {
+  restoreMarkerStyles();
+});
+
+// making sure pop up stay open no auto clos
+map.on("popupopen", e => {
+  e.popup.options.autoClose = false;
+});
+
+
 
 /* THEME SWITCH */
 const themeBtn = document.getElementById("themeBtn");
@@ -559,6 +570,12 @@ fetch(API_URL)
         <button class="popup-btn" onclick="navigateFromPopup(${b.latitude},${b.longitude})">Navigate</button>
       </div>
     `);
+
+    // restore markers to normal if close
+    marker.on("popupclose", () => {
+      restoreMarkerStyles();
+    });
+
 
     cluster.addLayer(marker);
     buildingMarkers.push({ name:b.name, marker, lat:b.latitude, lng:b.longitude });
@@ -1092,10 +1109,22 @@ const installBtn = document.getElementById("installBtn");
 window.addEventListener("beforeinstallprompt", e => {
   e.preventDefault();
   deferredPrompt = e;
-  installBtn.style.display = "block";
 
-  // Analytics
-  gtag('event', 'pwa_install_prompt_shown');
+  // ONLY show if not already installed
+  if (!isInStandalone()) {
+    installBtn.style.display = "block";
+
+    // Analytics: prompt shown
+    gtag('event', 'pwa_install_prompt_shown');
+  }
+});
+
+window.addEventListener("appinstalled", () => {
+  installBtn.style.display = "none";
+  updateInstallUI();
+
+  // Analytics: user actually installed
+  gtag('event', 'pwa_installed');
 });
 
 installBtn.onclick = async () => {
@@ -1117,12 +1146,34 @@ function isIos() {
 }
 
 function isInStandalone() {
-  return ('standalone' in window.navigator) && window.navigator.standalone;
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone === true;
 }
 
-if (isIos() && !isInStandalone()) {
-  document.getElementById("iosInstall").style.display = "block";
+function updateInstallUI() {
+  const iosGuide = document.getElementById("iosInstall");
+  const installBtn = document.getElementById("installBtn");
+
+  // If already installed → hide EVERYTHING
+  if (isInStandalone()) {
+    iosGuide.style.display = "none";
+    installBtn.style.display = "none";
+    return;
+  }
+
+  // iOS → show guide only
+  if (isIos()) {
+    iosGuide.style.display = "block";
+    installBtn.style.display = "none";
+  }
 }
+
+// Run on load
+updateInstallUI();
+
+// Also check when app mode changes
+window.matchMedia('(display-mode: standalone)')
+  .addEventListener('change', updateInstallUI);
 
 </script>
 
@@ -1149,14 +1200,26 @@ const activeBuildingIcon = L.icon({
 // Focus on building funtion works with marker cluster
 function focusBuilding(marker, lat, lng, zoom = 19) {
   map.setView([lat, lng], zoom, { animate: true });
+
   cluster.zoomToShowLayer(marker, () => {
     setTimeout(() => {
       marker.openPopup();
-      map.panBy([0, -200], true)
 
-    }, 300);
+      // ---- SMART CENTERING ----
+      const mapSize = map.getSize();
+      const offsetY = mapSize.y * 0.99; // 99% from top
+
+      // Instead of panBy only vertically, use panInside
+      map.panInside(marker.getLatLng(), {
+        paddingTopLeft: [110, offsetY],   // push down from header
+        paddingBottomRight: [10, 40],   // keep some margin at bottom/right
+        animate: true
+      });
+
+    }, 420);
   });
 }
+
 
 // Dim logic
 function dimOtherMarkers(active){
