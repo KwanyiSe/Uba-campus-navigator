@@ -28,8 +28,9 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
 <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
-<style>
 
+
+<style>
 html,body{
   height:100%;margin:0;
   font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;
@@ -125,6 +126,22 @@ html,body{
   align-items: center;
   box-shadow: 0 10px 26px rgba(2,6,23,0.32);
 }
+
+/* ---- Fix mobile search zomm shift ---- */
+input, select, textarea {
+  font-size: 16px !important;
+}
+
+html, body {
+  overscroll-behavior: none;
+  overflow: hidden;
+}
+
+#searchBox {
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+
 
 /* Real SVG search icon */
 .search-icon svg {
@@ -437,17 +454,45 @@ const API_URL = "/api/buildings/";
 const ROUTE_URL = "/api/route/";
 
 /* MAP INIT */
-const map = L.map("map", { zoomControl: true }).setView([6.011, 10.2595], 17);
+// STABLE TILE BEHAVIOR 
+L.Browser.retina = false;   // prevent Phones double-tile switching
 
+const map = L.map("map", {
+  zoomControl: true,
+  minZoom: 16,
+  maxZoom: 20,
+  zoomSnap: 0.5,
+  zoomDelta: 0.5,
+  bounceAtZoomLimits: false
+}).setView([6.011, 10.2595], 17);
+
+// Google Satellite — locked to ONE style the green style
 const satellite = L.tileLayer(
-  "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", { maxZoom:20 }
+  "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+  {
+    maxZoom: 20,
+    minZoom: 16,
+    keepBuffer: 5,
+    updateWhenIdle: true,
+    detectRetina: false,
+    crossOrigin: true
+  }
 ).addTo(map);
 
+// Dark mode (secondary)
 const dark = L.tileLayer(
-  "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom:20 }
+  "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+  { maxZoom: 20, minZoom: 16 }
 );
 
+// keep track
 let currentBase = "satellite";
+
+// stop map from re-rendering wrong tiles after resize
+map.on("resize", () => {
+  map.invalidateSize({ animate: false });
+});
+
 
 /* THEME SWITCH */
 const themeBtn = document.getElementById("themeBtn");
