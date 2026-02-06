@@ -403,11 +403,15 @@ button:active, .popup-btn:active {
 
 
 <!-- IPhone user guide-->
-<div id="iosInstall" style="display:none; text-align:center; padding:10px;">
+<div id="iosInstall"
+  style="display:none; text-align:center; padding:10px; position:fixed;
+         bottom:70px; left:10px; right:10px; background:#0f172a;
+         border-radius:10px; z-index:10030;">
   <p>
     📲 To install on iPhone:<br>
     Tap <b>Share</b> → <b>Add to Home Screen</b>
   </p>
+  
 </div>
 
 <!-- MAP -->
@@ -468,16 +472,33 @@ const map = L.map("map", {
 
 // Google Satellite — locked to ONE style the green style
 const satellite = L.tileLayer(
-  "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+  "https://mt1.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}",
   {
     maxZoom: 20,
     minZoom: 16,
-    keepBuffer: 5,
+
+    // ===== FORCE CONSISTENT GREEN IMAGERY =====
+    subdomains: ["mt1"],       // lock to ONE server
+    detectRetina: false,       // stop phones expecially iPhone mixing tiles
+    keepBuffer: 10,
     updateWhenIdle: true,
-    detectRetina: false,
-    crossOrigin: true
+    updateWhenZooming: false,
+    crossOrigin: true,
+    reuseTiles: true
   }
 ).addTo(map);
+
+// Enhance color to match the nice green look
+satellite.on("tileload", function(e) {
+  e.tile.style.filter =
+    "saturate(1.15) contrast(1.05) brightness(1.02)";
+});
+
+// Force redraw on load to avoid brown cached tiles
+map.on("load", () => {
+  satellite.redraw();
+});
+
 
 // Dark mode (secondary)
 const dark = L.tileLayer(
@@ -530,8 +551,15 @@ const campusBoundary = [
   [6.00500, 10.25220],
 ];
 const bounds = L.latLngBounds(campusBoundary);
-map.setMaxBounds(bounds.pad(0.01));
-map.fitBounds(bounds);
+// Show full campus first
+map.fitBounds(bounds, {
+  padding: [20, 20]
+});
+// Lock user from dragging outside ugly area
+map.setMaxBounds(bounds.pad(0.02));
+map.on("drag", function () {
+  map.panInsideBounds(bounds, { animate: false });
+});
 
 /* BLUR OUTSIDE */
 const world = [
@@ -755,7 +783,7 @@ function startCompass() {
 let BUFFER_SIZE = 4; // fast initial response
 
 //ROUTE SNAPPING SETTINGS
-const SNAP_RADIUS = 10;        // meters
+const SNAP_RADIUS = 6;        // meters
 const STOP_SNAP_DISTANCE = 6;  // meters before destination
 
 
@@ -884,7 +912,6 @@ map.on("locationfound", e => {
   }
 
   // route snapping logic
-
   if (routeLine) {
     const routeCoords = routeLine.getLatLngs();
     const nearest = getNearestPointOnRoute(processedPos, routeCoords);
@@ -892,19 +919,21 @@ map.on("locationfound", e => {
     const distanceToEnd =
       processedPos.distanceTo(routeCoords[routeCoords.length - 1]);
 
+    // human walking behavior
+    const isVeryCloseToRoute = nearest.distance <= 5;
+    const isMoving = processedPos.distanceTo(lastGoodPos) > 0.8;
+
     const shouldSnap =
-      nearest.distance <= SNAP_RADIUS &&
-      distanceToEnd > STOP_SNAP_DISTANCE;
+      isVeryCloseToRoute &&
+      distanceToEnd > STOP_SNAP_DISTANCE &&
+      isMoving;
 
     if (shouldSnap) {
-
-      // ONLY snap if movement is significant
-      const moveDelta = processedPos.distanceTo(nearest.point);
-
-      if (moveDelta > 1.2) {
-        processedPos = nearest.point;
-      }
-      // else → keep real GPS so marker keeps flowing
+      // Smooth blend instead of hard lock
+      processedPos = L.latLng(
+        processedPos.lat * 0.4 + nearest.point.lat * 0.6,
+        processedPos.lng * 0.4 + nearest.point.lng * 0.6
+      );
     }
   }
 
@@ -1211,7 +1240,7 @@ function focusBuilding(marker, lat, lng, zoom = 19) {
 
       // Instead of panBy only vertically, use panInside
       map.panInside(marker.getLatLng(), {
-        paddingTopLeft: [110, offsetY],   // push down from header
+        paddingTopLeft: [100, offsetY],   // push down from header
         paddingBottomRight: [10, 40],   // keep some margin at bottom/right
         animate: true
       });
