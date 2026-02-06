@@ -411,7 +411,7 @@ button:active, .popup-btn:active {
     📲 To install on iPhone:<br>
     Tap <b>Share</b> → <b>Add to Home Screen</b>
   </p>
-  
+
 </div>
 
 <!-- MAP -->
@@ -545,21 +545,39 @@ applyTheme();
 
 /* BOUNDARY LOCK */
 const campusBoundary = [
-  [6.01750, 10.25240],
-  [6.01610, 10.26820],
-  [6.00610, 10.26840],
-  [6.00500, 10.25220],
+  [6.01750, 10.25110],  // top left
+  [6.01610, 10.26820],   // top right
+  [6.00610, 10.26840],   // bottom right
+  [6.00420, 10.25120],   // bottom left 
 ];
+
 const bounds = L.latLngBounds(campusBoundary);
+
 // Show full campus first
-map.fitBounds(bounds, {
-  padding: [20, 20]
+map.whenReady(() => {
+  // Show full campus no matter what
+  map.fitBounds(bounds, {
+    padding: [40, 40],
+    animate: false
+  });
+
+  // Prevent anything else from overriding on load
+  setTimeout(() => {
+    map.fitBounds(bounds, {
+      padding: [40, 40],
+      animate: false
+    });
+  }, 600);
+
 });
+
+
 // Lock user from dragging outside ugly area
+/*
 map.setMaxBounds(bounds.pad(0.02));
 map.on("drag", function () {
   map.panInsideBounds(bounds, { animate: false });
-});
+});*/
 
 /* BLUR OUTSIDE */
 const world = [
@@ -1179,22 +1197,37 @@ function isInStandalone() {
          window.navigator.standalone === true;
 }
 
+
 function updateInstallUI() {
   const iosGuide = document.getElementById("iosInstall");
   const installBtn = document.getElementById("installBtn");
 
-  // If already installed → hide EVERYTHING
+  // Already installed → hide everything
   if (isInStandalone()) {
     iosGuide.style.display = "none";
     installBtn.style.display = "none";
     return;
   }
 
-  // iOS → show guide only
+  // iOS → show guide
   if (isIos()) {
     iosGuide.style.display = "block";
     installBtn.style.display = "none";
+
+    // TAP ANYWHERE TO CLOSE
+    setTimeout(() => {
+      document.addEventListener("click", hideIosGuide, { once: true });
+      document.addEventListener("touchstart", hideIosGuide, { once: true });
+    }, 300);
+
+  } else {
+    iosGuide.style.display = "none";
   }
+}
+
+function hideIosGuide() {
+  const iosGuide = document.getElementById("iosInstall");
+  iosGuide.style.display = "none";
 }
 
 // Run on load
