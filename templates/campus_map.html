@@ -458,7 +458,7 @@ const API_URL = "/api/buildings/";
 const ROUTE_URL = "/api/route/";
 
 /* MAP INIT */
-// STABLE TILE BEHAVIOR 
+
 L.Browser.retina = false;   // prevent Phones double-tile switching
 
 const map = L.map("map", {
@@ -545,32 +545,11 @@ applyTheme();
 
 /* BOUNDARY LOCK */
 const campusBoundary = [
-  [6.01750, 10.25110],  // top left
+  [6.01760, 10.25090],  // top left
   [6.01610, 10.26820],   // top right
   [6.00610, 10.26840],   // bottom right
-  [6.00420, 10.25120],   // bottom left 
+  [6.00390, 10.25090],   // bottom left 
 ];
-
-const bounds = L.latLngBounds(campusBoundary);
-
-// Show full campus first
-map.whenReady(() => {
-  // Show full campus no matter what
-  map.fitBounds(bounds, {
-    padding: [40, 40],
-    animate: false
-  });
-
-  // Prevent anything else from overriding on load
-  setTimeout(() => {
-    map.fitBounds(bounds, {
-      padding: [40, 40],
-      animate: false
-    });
-  }, 600);
-
-});
-
 
 // Lock user from dragging outside ugly area
 /*
@@ -1187,7 +1166,7 @@ installBtn.onclick = async () => {
   installBtn.style.display = "none";
 };
 
-//IOS install guid
+//IOS install Guide
 function isIos() {
   return /iphone|ipad|ipod/i.test(navigator.userAgent);
 }
@@ -1229,6 +1208,13 @@ function hideIosGuide() {
   const iosGuide = document.getElementById("iosInstall");
   iosGuide.style.display = "none";
 }
+
+// Re-check when user returns to app
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    updateInstallUI();
+  }
+});
 
 // Run on load
 updateInstallUI();
