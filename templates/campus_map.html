@@ -1147,6 +1147,7 @@ window.addEventListener("beforeinstallprompt", e => {
 
 window.addEventListener("appinstalled", () => {
   installBtn.style.display = "none";
+  localStorage.setItem("ios_installed", "yes");
   updateInstallUI();
 
   // Analytics: user actually installed
@@ -1176,24 +1177,28 @@ function isInStandalone() {
          window.navigator.standalone === true;
 }
 
-
 function updateInstallUI() {
   const iosGuide = document.getElementById("iosInstall");
   const installBtn = document.getElementById("installBtn");
 
-  // Already installed → hide everything
-  if (isInStandalone()) {
+  // ===== ALREADY INSTALLED CHECK =====
+  const installed =
+    window.navigator.standalone === true ||
+    window.matchMedia('(display-mode: standalone)').matches ||
+    localStorage.getItem("ios_installed") === "yes";
+
+  if (installed) {
     iosGuide.style.display = "none";
     installBtn.style.display = "none";
     return;
   }
 
-  // iOS → show guide
+  // ===== IOS DEVICE =====
   if (isIos()) {
     iosGuide.style.display = "block";
     installBtn.style.display = "none";
 
-    // TAP ANYWHERE TO CLOSE
+    // Close on tap anywhere
     setTimeout(() => {
       document.addEventListener("click", hideIosGuide, { once: true });
       document.addEventListener("touchstart", hideIosGuide, { once: true });
@@ -1206,8 +1211,13 @@ function updateInstallUI() {
 
 function hideIosGuide() {
   const iosGuide = document.getElementById("iosInstall");
+
   iosGuide.style.display = "none";
+
+  // Remember user dismissed OR installed
+  localStorage.setItem("ios_installed", "yes");
 }
+
 
 // Re-check when user returns to app
 document.addEventListener("visibilitychange", () => {
