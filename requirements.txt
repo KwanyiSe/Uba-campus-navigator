@@ -1,15 +1,24 @@
-asgiref==3.11.0
-certifi==2026.1.4
-charset-normalizer==3.4.4
-Django==6.0.1
+Django==5.2
 djangorestframework==3.16.1
 gunicorn==24.1.1
-idna==3.11
-openrouteservice==2.3.3
-packaging==26.0
-pillow==12.1.0
-requests==2.32.5
+whitenoise==6.11.0
+
+# PostgreSQL driver
+psycopg2-binary==2.9.11
+
+# Utilities
+asgiref==3.11.0
 sqlparse==0.5.5
 tzdata==2025.3
+
+# Network & APIs
+requests==2.32.5
 urllib3==2.6.3
-whitenoise==6.11.0
+certifi==2026.1.4
+charset-normalizer==3.4.4
+idna==3.11
+
+# Your extras
+openrouteservice==2.3.3
+pillow==12.1.0
+packaging==26.0
