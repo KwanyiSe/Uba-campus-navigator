@@ -21,7 +21,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # SECURITY
-
 # Keep the secret key secret! Stored in .env
 SECRET_KEY = config("SECRET_KEY")
 
