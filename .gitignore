@@ -1,8 +1,4 @@
-# Database
-db.sqlite3
-*.sqlite3
-
-# Environment
+# Environment ignore secrets
 .env
 
 # Python cache
