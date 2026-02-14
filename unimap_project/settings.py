@@ -98,18 +98,17 @@ WSGI_APPLICATION = 'unimap_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DATABASE_NAME'),
-        'USER': config('DATABASE_USER'),
-        'PASSWORD': config('DATABASE_PASSWORD'),
-        'HOST': config('DATABASE_HOST'),
-        'PORT': config('DATABASE_PORT'),
+        'NAME': config("DATABASE_NAME"),
+        'USER': config("DATABASE_USER"),
+        'PASSWORD': config("DATABASE_PASSWORD"),
+        'HOST': config("DATABASE_HOST"),
+        'PORT': config("DATABASE_PORT", cast=int),
         'OPTIONS': {
-            'sslmode': 'require',
-            'channel_binding': 'require',  # Required by Neon
+            'sslmode': config("DATABASE_SSLMODE", default="require"),
+            'channel_binding': config("DB_CHANNEL_BINDING", default="require")
         },
     }
 }
-
 
 # PASSWORD VALIDATION
 AUTH_PASSWORD_VALIDATORS = [
