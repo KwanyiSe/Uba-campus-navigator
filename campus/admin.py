@@ -1,6 +1,6 @@
 from django.contrib.admin import AdminSite
 from django.contrib import admin
-from .models import Building, SiteVisit, DailyStats
+from .models import Building, SiteVisit, DailyStats, University
 from django.utils import timezone
 from django.db import models
 
@@ -56,8 +56,13 @@ class SiteVisitAdmin(admin.ModelAdmin):
 class BuildingAdmin(admin.ModelAdmin):
     pass
 
-
-
+@admin.register(University, site=campus_admin_site)
+class UniversityAdmin(admin.ModelAdmin):
+    list_display = ("name", "short_name", "country")
+    search_fields = ("name","short_name")
+    
+    
+    #
 def admin_index(request):
     """
     Calculates anonymous visitor statistics.

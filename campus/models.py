@@ -1,13 +1,40 @@
 from django.db import models
 
 # Creating models for our campus
+class University(models.Model):
+    """University Model allow scalability allow SaaS achitecture"""
+   
+    name = models.CharField(max_length=150)
+    short_name = models.CharField(max_length=20)
+    country = models.CharField(max_length=50)
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    logo = models.ImageField(upload_to="universities/logos/", blank=True, null=True)
+    #boundries
+    # Bottom (south) → copy latitude → this is your min_lat
+    min_lat = models.FloatField(blank=True, null=True)
 
+    #Top (north) → copy latitude → this is your max_lat
+    max_lat = models.FloatField(blank=True, null=True)
 
+    # Left (west) → copy longitude → this is your min_lng
+    min_lng = models.FloatField(blank=True, null=True)
+
+    # Right (east) → copy longitude → this is your max_lng
+    max_lng = models.FloatField(blank=True, null=True)
+   
+   
+    class Meta:
+        verbose_name = "University"
+        verbose_name_plural = "Universities"
+
+    def __str__(self):
+        return self.name
+    
+    
 class Building(models.Model):
     """
-        
-        stores building informations
-    
+        stores building informations for a University
     """
     name = models.CharField(max_length=100)
     latitude = models.FloatField()
@@ -17,6 +44,13 @@ class Building(models.Model):
     photo = models.ImageField(upload_to="buildings/photos/", blank=True, null=True)
     icon = models.ImageField(upload_to="buildings/icons/", blank=True, null=True)
     
+    university = models.ForeignKey(
+    University,
+    on_delete=models.CASCADE,
+    related_name="buildings",
+    null=True,
+    blank=True) # remove blank after adding university to all existing buildings for migration error
+
     def __str__(self):
         return self.name
     
