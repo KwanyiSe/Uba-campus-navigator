@@ -368,15 +368,21 @@ button:active, .popup-btn:active {
   <div class="spinner"></div>
   <div id="splash-title">Campus map</div>
   <div id="splash-logo-box">
-    <img src="{% static 'blur_uba_logo.png' %}" alt="UBA" />
-    <div id="splash-logo-text">UNIVERSITY OF BAMENDA</div>
+      
+    {% if university.logo and university.logo.url %}
+        <img src="{{ university.logo.url }}" alt="{{ university.name }}">
+    {% else %}
+        <img src="{% static 'blur_uba_logo.png' %}" alt="Default Logo">
+    {% endif %}
+
+    <div id="splash-logo-text">{{ university.name|upper }}</div>
   </div>
 </div>
 
 <!-- HEADER -->
 <div id="headerBar">
   <button id="themeBtn"></button>
-  <div id="titleText">University of Bamenda</div>
+  <div id="titleText">{{ university.name }}</div>
 </div>
 
 <!-- SEARCH -->
@@ -458,7 +464,6 @@ const API_URL = "/api/buildings/";
 const ROUTE_URL = "/api/route/";
 
 /* MAP INIT */
-
 L.Browser.retina = false;   // prevent Phones double-tile switching
 
 const map = L.map("map", {
@@ -468,7 +473,8 @@ const map = L.map("map", {
   zoomSnap: 0.5,
   zoomDelta: 0.5,
   bounceAtZoomLimits: false
-}).setView([6.011, 10.2595], 17);
+})
+
 
 // Google Satellite — locked to ONE style the green style
 const satellite = L.tileLayer(
@@ -544,19 +550,23 @@ themeBtn.onclick = () => {
 applyTheme();
 
 /* BOUNDARY LOCK */
-const campusBoundary = [
-  [6.01760, 10.25090],  // top left
-  [6.01610, 10.26820],   // top right
-  [6.00610, 10.26840],   // bottom right
-  [6.00390, 10.25090],   // bottom left 
-];
+// getting our campus boundry from database backend
+const campusBoundary = JSON.parse('{{ campus_boundary_json|default:"[]"|escapejs }}');
 
-// Lock user from dragging outside ugly area
+// auto fit boundry dynamic for each university
+if(campusBoundary.length){
+    const polygon = L.polygon(campusBoundary);
+    map.fitBounds(polygon.getBounds(), { padding:[40,120] });
+}
+
+
+// Lock user from dragging outside ugly area commented for now user can freely zoom out of campus bounds
 /*
 map.setMaxBounds(bounds.pad(0.02));
 map.on("drag", function () {
   map.panInsideBounds(bounds, { animate: false });
 });*/
+
 
 /* BLUR OUTSIDE */
 const world = [
@@ -575,7 +585,7 @@ L.polygon([world, campusBoundary], {
 let buildingMarkers = [];
 const cluster = L.markerClusterGroup();
 
-fetch(API_URL)
+fetch(`${API_URL}?university={{ university.short_name }}`)
 .then(r => r.json())
 .then(data => {
   data.forEach(b => {
