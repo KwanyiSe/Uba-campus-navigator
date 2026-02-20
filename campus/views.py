@@ -51,7 +51,7 @@ def campus_map(request, short_name=None):
     if short_name:
         university = get_object_or_404(
             University,
-            short_name=short_name,
+            short_name__iexact=short_name, # Use case-insensitive lookup so URLs work regardless of case
             active=True
         )
     else:

@@ -1,6 +1,10 @@
+# Creating models for our campus
+from django.contrib.auth.models import User
 from django.db import models
 
-# Creating models for our campus
+
+
+
 class University(models.Model):
     """University Model allow scalability allow SaaS achitecture"""
    
@@ -22,7 +26,6 @@ class University(models.Model):
 
     # Right (east) → copy longitude → this is your max_lng
     max_lng = models.FloatField(blank=True, null=True)
-   
    
     class Meta:
         verbose_name = "University"
@@ -69,6 +72,8 @@ class SiteVisit(models.Model):
 
     # Updated automatically on every request
     last_visit = models.DateTimeField(auto_now=True)
+    
+    building = models.ForeignKey(Building, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return self.session_key
@@ -79,9 +84,19 @@ class DailyStats(models.Model):
     Stores aggregated visitor counts per day.
     This prevents numbers from dropping due to session expiry.
     """
-
     date = models.DateField(unique=True)
     visitors = models.PositiveIntegerField(default=0)
+    building = models.ForeignKey(Building, on_delete=models.CASCADE, null=True, blank=True)
+
 
     def __str__(self):
         return str(self.date)
+
+class CampusAdminUser(models.Model):
+    # each user has exacly one CampusAdminUser profile
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="campus_admin")
+    #ties that user to a specific university
+    university = models.ForeignKey("University", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.user.username} ({self.university.short_name})"

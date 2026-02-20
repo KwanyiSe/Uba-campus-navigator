@@ -1,98 +1,164 @@
 from django.contrib.admin import AdminSite
 from django.contrib import admin
-from .models import Building, SiteVisit, DailyStats, University
 from django.utils import timezone
 from django.db import models
 
-#adding back our group and users since i am using a custom admin site
-from django.contrib.auth.models import User, Group 
+# Import models
+from .models import Building, SiteVisit, DailyStats, University, CampusAdminUser
+
+# Import default auth models
+from django.contrib.auth.models import User, Group
 from django.contrib.auth.admin import UserAdmin, GroupAdmin
 from django.contrib.admin.sites import AlreadyRegistered
 
-
-#creating a custom admin
+# ---------------------------
+# Custom Admin Site
+# ---------------------------
 class CampusAdminSite(AdminSite):
+    """Custom admin site for UBA campus management."""
     site_header = "UBA Campus Administration"
 
     def index(self, request, extra_context=None):
+        """
+        Overrides the default admin index page to include extra stats
+        only visible to superusers.
+        """
         if extra_context is None:
             extra_context = {}
 
         extra_context.update(admin_index(request))
-
         return super().index(request, extra_context)
-    
-    
-#instantiating CampusAdminSite class
+
+
+# Instantiate custom admin site
 campus_admin_site = CampusAdminSite(name="campus_admin")
 
 
-#Register Django default authentication and athurization models
+# ---------------------------
+# Register default auth models
+# ---------------------------
 try:
-    ''' trying to register user admin and user if they are not registered yet. '''
-    campus_admin_site.register(User, UserAdmin) #making sure its not already registered
+    campus_admin_site.register(User, UserAdmin)
 except AlreadyRegistered:
     pass
 
 try:
-    ''' trying to register group admin and group if they are not registered yet. '''    
-    campus_admin_site.register(Group, GroupAdmin) 
+    campus_admin_site.register(Group, GroupAdmin)
 except AlreadyRegistered:
     pass
-    
-
-#registering models
-@admin.register(DailyStats, site=campus_admin_site)
-class DailyStatsAdmin(admin.ModelAdmin):
-    list_display = ("date", "visitors")
-    ordering = ("-date",)
 
 
-@admin.register(SiteVisit, site=campus_admin_site)
-class SiteVisitAdmin(admin.ModelAdmin):
-    list_display = ("session_key", "first_visit", "last_visit")
-
-@admin.register(Building, site=campus_admin_site)
-class BuildingAdmin(admin.ModelAdmin):
-    pass
-
-@admin.register(University, site=campus_admin_site)
-class UniversityAdmin(admin.ModelAdmin):
-    list_display = ("name", "short_name", "country")
-    search_fields = ("name","short_name")
-    
-    
-    #
+# ---------------------------
+# Helper: Admin Index Stats
+# ---------------------------
 def admin_index(request):
     """
-    Calculates anonymous visitor statistics.
-
-    Definitions:
-    - total_visitors: all unique sessions ever seen
-    - visitors_today: first-time visitors today
-    - only visible to superusers.
+    Returns visitor statistics.
+    Superuser → sees all universities
+    Campus admin → sees only their university
     """
-    
-    if not request.user.is_superuser:
-        return {}
 
     today = timezone.now().date()
 
-    total_visitors = DailyStats.objects.aggregate(
-        total=models.Sum("visitors")
-    )["total"] or 0
+    # super user global stats
+    if request.user.is_superuser:
+        total_visitors = DailyStats.objects.aggregate(
+            total=models.Sum("visitors")
+        )["total"] or 0
 
-    visitors_today = DailyStats.objects.filter(
-        date=today
-    ).first()
+        visitors_today = DailyStats.objects.filter(date=today).aggregate(
+            total=models.Sum("visitors")
+        )["total"] or 0
 
-    visitors_today = visitors_today.visitors if visitors_today else 0
+        return {
+            "total_visitors": total_visitors,
+            "visitors_today": visitors_today,
+        }
 
-    return {
-        "total_visitors": total_visitors,
-        "visitors_today": visitors_today,
-    }
+    # campus admin only their university
+    if hasattr(request.user, "campus_admin"):
+        university = request.user.campus_admin.university
+
+        total_visitors = DailyStats.objects.filter(
+            building__university=university
+        ).aggregate(
+            total=models.Sum("visitors")
+        )["total"] or 0
+
+        visitors_today = DailyStats.objects.filter(
+            date=today,
+            building__university=university
+        ).aggregate(
+            total=models.Sum("visitors")
+        )["total"] or 0
+
+        return {
+            "total_visitors": total_visitors,
+            "visitors_today": visitors_today,
+        }
+
+    return {}
+
+# ---------------------------
+# Admin for University
+# ---------------------------
+@admin.register(University, site=campus_admin_site)
+class UniversityAdmin(admin.ModelAdmin):
+    """Superusers can manage all universities."""
+    list_display = ("name", "short_name", "country")
+    search_fields = ("name", "short_name")
 
 
+# ---------------------------
+# Admin for Building
+# ---------------------------
+@admin.register(Building, site=campus_admin_site)
+class BuildingAdmin(admin.ModelAdmin):
+    """Filters buildings per university for non-superusers."""
+    list_display = ("name", "category", "university")
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        # Filter buildings by the user's university
+        return qs.filter(university=request.user.campus_admin.university)
+
+    def save_model(self, request, obj, form, change):
+        if not request.user.is_superuser:
+            # Automatically assign university to the building
+            obj.university = request.user.campus_admin.university
+        super().save_model(request, obj, form, change)
 
 
+# ---------------------------
+# Admin for DailyStats
+# ---------------------------
+@admin.register(DailyStats, site=campus_admin_site)
+class DailyStatsAdmin(admin.ModelAdmin):
+    """Filter stats per university via building."""
+    list_display = ("date", "visitors")
+    ordering = ("-date",)
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        # Filter by user's university through building
+        return qs.filter(building__university=request.user.campus_admin.university)
+
+
+# ---------------------------
+# Admin for SiteVisit
+# ---------------------------
+@admin.register(SiteVisit, site=campus_admin_site)
+class SiteVisitAdmin(admin.ModelAdmin):
+    """Filter site visits per university via building."""
+    list_display = ("session_key", "first_visit", "last_visit")
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        # Filter by user's university through building
+        return qs.filter(building__university=request.user.campus_admin.university)
