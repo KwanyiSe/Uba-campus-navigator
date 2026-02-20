@@ -28,7 +28,7 @@ SECRET_KEY = config("SECRET_KEY")
 ORS_KEY = config("ORS_KEY")
 
 # DEBUG mode off in production
-DEBUG = config("DEBUG", default=False, cast=bool)
+DEBUG = config("DEBUG", default=True, cast=bool)
 
 # Hosts allowed to serve the app
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'Uba-navigator.onrender.com']
@@ -132,6 +132,9 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]  # For development
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')    # For production
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+# MEDIA
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # DEFAULT AUTO FIELD
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
