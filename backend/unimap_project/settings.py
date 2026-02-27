@@ -48,9 +48,9 @@ INSTALLED_APPS = [
     
     #new apps still in development
     'accounts.apps.AccountsConfig',
-    'academic.apps.AcademicConfig',
-    'attendance.apps.AttendanceConfig',
-    'associate.apps.AssociateConfig',
+    # 'academic.apps.AcademicConfig',
+    # 'attendance.apps.AttendanceConfig',
+    # 'associate.apps.AssociateConfig',
         
     # Default Django apps
     'django.contrib.admin',
