@@ -1,0 +1,29 @@
+
+{% extends "admin/index.html" %}
+
+{% block content %}
+
+<!-- ===== Site Statistics ===== -->
+<div class="dashboard-module" style="margin-bottom: 20px;">
+  <h2>Site Statistics</h2>
+
+  <ul style="list-style: none; padding-left: 0;">
+    <li>
+      <strong>Total Visitors:</strong>
+      {{ total_visitors|default:"0" }}
+    </li>
+    <li>
+      <strong>Visitors Today:</strong>
+      {{ visitors_today|default:"0" }}
+    </li>
+  </ul>
+
+  <p style="color: #666; font-size: 12px;">
+    Based on browser sessions (no login required).
+  </p>
+</div>
+<!-- ===== End Site Statistics ===== -->
+
+{{ block.super }}
+
+{% endblock %}

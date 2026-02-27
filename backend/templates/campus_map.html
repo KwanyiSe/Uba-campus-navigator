@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>University of Bamenda — Campus Map</title>
+
+{% load static %}
+
+<!-- ANDROID PWA Support -->
+<link rel="manifest" href="{% static 'pwa/manifest.json' %}">
+<meta name="theme-color" content="#0d6efd">
+
+<!-- iOS PWA Support -->
+<link rel="apple-touch-icon" href="/static/pwa/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="UBa Map">
+
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+
+
+<style>
+html,body{
+  height:100%;margin:0;
+  font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;
+  background:#071022;color:#e6eef8;overflow:hidden;
+}
+
+/* ---------------- SPLASH ---------------- */
+#splash {
+  position: fixed; inset: 0;
+  background: #1a1a1a;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 20000;
+}
+.spinner {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 4px solid rgba(255,255,255,0.25);
+  border-top-color: #cfcfcf;
+  animation: spin 1s linear infinite;
+  margin-bottom: 18px;
+}
+#splash-title {
+  font-size: 22px; font-weight:700; color:#f48b23;
+  margin-bottom: 35px; /* to bring the  campus txt and spinner down*/
+}
+#splash-logo-box {
+  position:absolute;bottom:38px;text-align:center;
+}
+#splash-logo-box img { width:120px;margin-bottom:6px; }
+#splash-logo-text {
+  color:#fff;font-size:16px;font-weight:600;letter-spacing:.5px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------------- HEADER ---------------- */
+#headerBar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 68px;             
+  padding-top: 8px;          
+  background: #0b1220;
+  z-index: 10010;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.6);
+  font-size: 18px;        
+  font-weight: 700;
+}
+#themeBtn {
+  position: absolute;
+  left: 12px;
+  top: 14px;           
+  width: 40px;         
+  height: 40px;
+  border-radius: 10px; 
+  background: #111827;
+  border: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+/* ---------------- SEARCH ---------------- */
+
+#searchContainer {
+  position: fixed;
+  top: 78px;
+  margin-top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 28px);
+  max-width: 700px;
+  z-index: 10009;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+}
+
+/* Main search box */
+#searchBox {
+  position: relative;
+  flex: 1;
+  background: #fff;
+  border-radius: 14px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 10px 26px rgba(2,6,23,0.32);
+}
+
+/* ---- Fix mobile search zomm shift ---- */
+input, select, textarea {
+  font-size: 16px !important;
+}
+
+html, body {
+  overscroll-behavior: none;
+  overflow: hidden;
+}
+
+#searchBox {
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+
+
+/* Real SVG search icon */
+.search-icon svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  stroke: #374151;       /* nice darker gray */
+  opacity: 0.7;
+  margin-left: 6px;
+}
+
+/* Input field */
+#buildingSearch {
+  flex: 1;
+  border: 0;
+  outline: none;
+  font-size: 15px;
+  padding: 10px 8px;
+  background: white;
+  color: black;
+}
+
+/* Darker clear X icon */
+.clear-icon {
+  position: absolute;
+  right: 10px;
+  cursor: pointer;
+  color: #111;           /* almost black */
+  font-weight: bold;
+  font-size: 16px;
+  display: none;         /* shown by JS when typing */
+}
+
+/* Suggestions dropdown */
+#suggestions {
+  position: absolute;
+  top: 52px;
+  left: 8px;
+  right: 8px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.24);
+  max-height: 230px;
+  overflow: auto;
+  display: none;
+  z-index: 20000;
+}
+
+.suggestion-item {
+  padding: 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  cursor: pointer;
+  font-size: 14px;
+  color: #111;
+}
+
+.suggestion-item:hover {
+  background: #f0f6ff;
+}
+
+/* Search button (desktop only) */
+#searchBtn {
+  background: #1f2937;
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+/* Hide search button on mobile */
+@media (max-width: 768px) {
+  #searchBtn {
+    display: none;
+  }
+}
+
+/* Small screens layout fix */
+@media (max-width: 480px) {
+  #searchContainer {
+    flex-direction: column;
+  }
+}
+
+
+/* MAP */
+#map{
+  position:fixed;top:0;bottom:0;left:0;right:0;z-index:1;
+}
+
+/* BLUR OUTSIDE */
+.leaflet-blur-mask {
+  filter: blur(4px) brightness(55%);
+  pointer-events: none;
+}
+
+/* FLOAT BUTTONS */
+.floatBtn{
+  position:fixed;right:12px;z-index:10009;border:none;color:#fff;
+  padding:10px 12px;border-radius:10px;font-weight:700;
+  background:#111827; cursor:pointer;
+  box-shadow:0 6px 18px rgba(2,6,23,0.6);
+  transition:0.15s;
+}
+
+#locateBtn{ top:150px }
+#stopNavigationBtn{ top:200px; display:none; }
+#aboutBtn{ top:260px }
+
+/* MOVE ZOOM BTN */
+.leaflet-control-zoom{
+  bottom:40px !important;
+  top:auto !important;
+  left:12px !important;
+  right:auto !important;
+}
+
+/* ROUTE BOX */
+#routeInfo{
+  position:fixed;
+  left:12px;
+  right:12px;
+  bottom:12px;
+  background:#0f172a;        
+  padding:12px;              
+  border-radius:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.5);
+  display:none;              /* hidden until route starts */
+  z-index:10020;
+}
+
+
+#routeSteps{
+  margin-top:8px;max-height:180px;overflow:auto;
+  color:#cfe7ff;font-size:13px;
+}
+
+/* TOAST */
+#toast{
+  position:fixed;left:50%;top:120px;transform:translateX(-50%);
+  background:rgba(8,10,14,0.96);padding:8px 12px;
+  border-radius:8px;color:#fff;display:none;z-index:10050;
+}
+
+/* POPUP BUTTONS */
+.popup-btn{
+  width:100%;background:#1f2937;color:#fff;border:none;
+  padding:8px;margin-top:6px;border-radius:8px;font-size:14px;
+  cursor:pointer;transition:0.15s;
+}
+.popup-btn:hover{ background:#374151; }
+
+/* UNIVERSAL CLICK EFFECT */
+button:active, .popup-btn:active {
+  transform: scale(0.94);
+  box-shadow:0 2px 6px rgba(0,0,0,0.5);
+  transition:0.08s ease;
+}
+
+/* ABOUT MODAL */
+.about-modal{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.6);
+  display:none;justify-content:center;align-items:center;
+  z-index:20000;
+}
+.about-content{
+  background:#111827;color:white;
+  width:85%;max-width:340px;padding:20px;
+  border-radius:12px;text-align:center;
+  box-shadow:0 8px 24px rgba(0,0,0,0.5);
+}
+.about-content h2{ margin-top:0; }
+.about-content a{ color:#3b82f6;font-weight:600; }
+
+/* USER LOCATION MARKER*/
+.user-location {
+  width: 18px;
+  height: 18px;
+
+  background: white;
+  border: 3px solid #111827;
+
+  border-radius: 50%;
+  position: relative;
+
+  box-shadow: 0 0 0 6px rgba(59,130,246,0.28);
+}
+
+/* triangle in the user marker*/
+.user-heading {
+  position: absolute;
+
+  /* Place base exactly on circle edge */
+  top: -10px;           /* 9px radius + 1px overlap */
+
+  left: 50%;
+
+  width: 0;
+  height: 0;
+
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+
+  border-bottom: 12px solid #111827;
+
+  /* Pivot at ecenter of circle */
+  transform-origin: 50% 19px;
+
+  transform: translateX(-50%) rotate(0deg);
+
+  transition: transform 0.25s linear;
+}
+
+</style>
+</head>
+<body>
+
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="spinner"></div>
+  <div id="splash-title">Campus map</div>
+  <div id="splash-logo-box">
+      
+    {% if university.logo and university.logo.url %}
+        <img src="{{ university.logo.url }}" alt="{{ university.name }}">
+    {% else %}
+        <img src="{% static 'blur_uba_logo.png' %}" alt="Default Logo">
+    {% endif %}
+
+    <div id="splash-logo-text">{{ university.name|upper }}</div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div id="headerBar">
+  <button id="themeBtn"></button>
+  <div id="titleText">{{ university.name }}</div>
+</div>
+
+<!-- SEARCH -->
+<div id="searchContainer">
+  <div id="searchBox">
+    <!-- Real search icon (SVG) -->
+    <span class="search-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+    </span>
+
+    <input id="buildingSearch" type="text" placeholder="Search building..." autocomplete="off" />
+
+    <!-- X icon -->
+    <span id="clearSearch" class="clear-icon">✕</span>
+
+    <div id="suggestions"></div>
+  </div>
+
+  <button id="searchBtn">Search</button>
+</div>
+
+
+<!-- IPhone user guide-->
+<div id="iosInstall"
+  style="display:none; text-align:center; padding:10px; position:fixed;
+         bottom:70px; left:10px; right:10px; background:#0f172a;
+         border-radius:10px; z-index:10030;">
+  <p>
+    📲 To install on iPhone:<br>
+    Tap <b>Share</b> → <b>Add to Home Screen</b>
+  </p>
+
+</div>
+
+<!-- MAP -->
+<div id="map"></div>
+
+<!-- FLOATING BUTTONS -->
+<button id="locateBtn" class="floatBtn">Locate Me</button>
+<button id="stopNavigationBtn" class="floatBtn">Stop Navigation</button>
+<button id="aboutBtn" class="floatBtn">About</button>
+
+<button id="installBtn" class="floatBtn" style="top:320px;display:none;">
+  Install App
+</button>
+
+
+<!-- ROUTE INFO -->
+<div id="routeInfo">
+  <div id="routeSummary">
+    <b>Distance:</b> <span id="distVal">—</span> &nbsp;
+    <b>Duration:</b> <span id="durVal">—</span>
+  </div>
+  <div id="routeSteps"></div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ABOUT MODAL -->
+<div id="aboutModal" class="about-modal">
+  <div class="about-content">
+    <h2>About the Developer</h2>
+    <p>
+      Developed by <b>Kwanyi Sedrick Bodeh</b><br>
+      <span style="opacity:0.6;">sedrickbodeh654@gmail.com +237654717023</span>
+    </p>
+    <button id="closeAbout" class="popup-btn">Close</button>
+  </div>
+</div>
+
+
+
+<script>
+
+const API_URL = "/api/buildings/";
+const ROUTE_URL = "/api/route/";
+
+/* MAP INIT */
+L.Browser.retina = false;   // prevent Phones double-tile switching
+
+const map = L.map("map", {
+  zoomControl: true,
+  minZoom: 16,
+  maxZoom: 20,
+  zoomSnap: 0.5,
+  zoomDelta: 0.5,
+  bounceAtZoomLimits: false
+})
+
+
+// Google Satellite — locked to ONE style the green style
+const satellite = L.tileLayer(
+  "https://mt1.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}",
+  {
+    maxZoom: 20,
+    minZoom: 16,
+
+    // ===== FORCE CONSISTENT GREEN IMAGERY =====
+    subdomains: ["mt1"],       // lock to ONE server
+    detectRetina: false,       // stop phones expecially iPhone mixing tiles
+    keepBuffer: 10,
+    updateWhenIdle: true,
+    updateWhenZooming: false,
+    crossOrigin: true,
+    reuseTiles: true
+  }
+).addTo(map);
+
+// Enhance color to match the nice green look
+satellite.on("tileload", function(e) {
+  e.tile.style.filter =
+    "saturate(1.15) contrast(1.05) brightness(1.02)";
+});
+
+// Force redraw on load to avoid brown cached tiles
+map.on("load", () => {
+  satellite.redraw();
+});
+
+
+// Dark mode (secondary)
+const dark = L.tileLayer(
+  "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+  { maxZoom: 20, minZoom: 16 }
+);
+
+// keep track
+let currentBase = "satellite";
+
+// stop map from re-rendering wrong tiles after resize
+map.on("resize", () => {
+  map.invalidateSize({ animate: false });
+});
+
+// reset markers if user tap the map when the popup is on
+map.on("click", () => {
+  restoreMarkerStyles();
+});
+
+// making sure pop up stay open no auto clos
+map.on("popupopen", e => {
+  e.popup.options.autoClose = false;
+});
+
+
+
+/* THEME SWITCH */
+const themeBtn = document.getElementById("themeBtn");
+function applyTheme(){
+  themeBtn.innerHTML = currentBase === "satellite"
+    ? `<svg viewBox="0 0 24 24" width="18"><path fill="none" stroke="white" stroke-width="1.6"
+       d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>`
+    : `<svg viewBox="0 0 24 24" width="18" fill="none" stroke="white" stroke-width="1.6">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a8 8 0 00-14.8 0"/></svg>`;
+}
+themeBtn.onclick = () => {
+  if(currentBase === "satellite"){ map.removeLayer(satellite); dark.addTo(map); currentBase="dark"; }
+  else{ map.removeLayer(dark); satellite.addTo(map); currentBase="satellite"; }
+  applyTheme();
+};
+applyTheme();
+
+/* BOUNDARY LOCK */
+// getting our campus boundry from database backend
+const campusBoundary = JSON.parse('{{ campus_boundary_json|default:"[]"|escapejs }}');
+
+// auto fit boundry dynamic for each university
+if(campusBoundary.length){
+    const polygon = L.polygon(campusBoundary);
+    map.fitBounds(polygon.getBounds(), { padding:[40,120] });
+}
+
+
+// Lock user from dragging outside ugly area commented for now user can freely zoom out of campus bounds
+/*
+map.setMaxBounds(bounds.pad(0.02));
+map.on("drag", function () {
+  map.panInsideBounds(bounds, { animate: false });
+});*/
+
+
+/* BLUR OUTSIDE */
+const world = [
+  [-90,-180],[-90,180],[90,180],[90,-180]
+];
+
+L.polygon([world, campusBoundary], {
+  fillColor:"#000",
+  fillOpacity:0.65,
+  stroke:false,
+  interactive:false,
+  className:"leaflet-blur-mask"
+}).addTo(map);
+
+/* LOAD BUILDINGS */
+let buildingMarkers = [];
+const cluster = L.markerClusterGroup();
+
+fetch(`${API_URL}?university={{ university.short_name }}`)
+.then(r => r.json())
+.then(data => {
+  data.forEach(b => {
+    const icon = L.icon({
+      iconUrl:"https://cdn-icons-png.flaticon.com/512/854/854878.png",
+      iconSize:[36,36], iconAnchor:[18,36]
+    });
+
+    const marker = L.marker([b.latitude, b.longitude], { icon });
+
+    marker.bindPopup(`
+      <div style="min-width:180px">
+        <div style="font-weight:700;margin-bottom:6px;">${b.name}</div>
+        <div style="color:#6b7280;font-size:13px;margin-bottom:8px;">${b.description||""}</div>
+        <button class="popup-btn" onclick="setStart(${b.latitude},${b.longitude})">Set Start</button>
+        <button class="popup-btn" onclick="setEnd(${b.latitude},${b.longitude})">Set Destination</button>
+        <button class="popup-btn" onclick="navigateFromPopup(${b.latitude},${b.longitude})">Navigate</button>
+      </div>
+    `);
+
+    // restore markers to normal if close
+    marker.on("popupclose", () => {
+      restoreMarkerStyles();
+    });
+
+
+    cluster.addLayer(marker);
+    buildingMarkers.push({ name:b.name, marker, lat:b.latitude, lng:b.longitude });
+  });
+
+  map.addLayer(cluster);
+})
+.catch(() => showToast("Failed loading buildings"));
+
+//search logic
+const input = document.getElementById("buildingSearch");
+const suggestions = document.getElementById("suggestions");
+const clearBtn = document.getElementById("clearSearch");
+
+/* show / hide X icon */
+input.addEventListener("input", () => {
+
+  clearBtn.style.display =
+    input.value.length > 0 ? "block" : "none";
+
+  const q = input.value.trim().toLowerCase();
+  if(!q){
+    suggestions.style.display="none";
+    return;
+  }
+
+  const match = buildingMarkers
+      .filter(b => b.name.toLowerCase().includes(q))
+      .slice(0,8);
+
+  suggestions.innerHTML = "";
+
+  match.forEach(m => {
+    const div = document.createElement("div");
+    div.className="suggestion-item";
+    div.innerText=m.name;
+
+    div.onclick = () => {
+      input.value=m.name;
+      clearBtn.style.display="block";
+      suggestions.style.display="none";
+
+      dimOtherMarkers(m.marker);
+      focusBuilding(m.marker, m.lat, m.lng);
+    };
+
+    suggestions.appendChild(div);
+  });
+
+  suggestions.style.display="block";
+});
+
+/* clear search */
+clearBtn.onclick = () => {
+  input.value="";
+  clearBtn.style.display="none";
+  suggestions.style.display="none";
+};
+
+/* ENTER KEY SEARCH */
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    triggerSearch();
+  }
+});
+
+/* BUTTON SEARCH (laptop) */
+document.getElementById("searchBtn").onclick = () => {
+  triggerSearch();
+};
+
+/* MAIN SEARCH FUNCTION */
+function triggerSearch(){
+  const q = input.value.trim().toLowerCase();
+
+  if(!q){
+    showToast("Enter building name");
+    return;
+  }
+
+  const found = buildingMarkers.find(
+    b => b.name.toLowerCase() === q
+  );
+
+  if(!found){
+    showToast("Building not found");
+    return;
+  }
+
+  dimOtherMarkers(found.marker);
+  focusBuilding(found.marker, found.lat, found.lng);
+}
+
+/* ===============================
+   GPS ENGINE THE KEY MAIN AND   THE MOST IMPORTANT FEATURE  OF THE SOFTWARE
+================================ */
+
+/* ===============================
+   COMPASS ENGINE
+================================ */
+
+let lastHeading = null;
+let compassStarted = false;
+let userMarker = null;
+let accuracyCircle = null;
+let lastGoodPos = null;
+let lastTimestamp = null;
+const positionBuffer = [];
+
+// auto unlock handler for automatically allowing gps compas for ios and andriod
+function tryAutoEnableCompass() {
+  if (compassStarted) return;
+
+  if (
+    typeof DeviceOrientationEvent !== "undefined" &&
+    typeof DeviceOrientationEvent.requestPermission === "function"
+  ) {
+    // iOS will reject unless user interacted
+    DeviceOrientationEvent.requestPermission()
+      .then(permission => {
+        if (permission === "granted") {
+          startCompass();
+          compassStarted = true;
+        }
+      })
+      .catch(() => {});
+  } else {
+    // Android / Chrome
+    startCompass();
+    compassStarted = true;
+  }
+}
+
+function handleOrientation(event) {
+  let heading = null;
+
+  // iOS
+  if (event.webkitCompassHeading !== undefined) {
+    heading = event.webkitCompassHeading;
+  }
+  // Android / others
+  else if (event.absolute && event.alpha !== null) {
+    heading = 360 - event.alpha;
+  }
+
+  if (heading === null) return;
+
+  heading = (heading + 360) % 360;
+
+  // smoothing (low-pass filter)
+  if (lastHeading === null) {
+    lastHeading = heading;
+  } else {
+    const diff = ((heading - lastHeading + 540) % 360) - 180;
+    lastHeading = lastHeading + diff * 0.21; // slower & precise
+  }
+
+  rotateUserArrow(lastHeading);
+}
+
+// keep the arrow center when phone is straight
+function rotateUserArrow(deg) {
+  const arrow = document.querySelector(".user-heading");
+  if (!arrow) return;
+
+  arrow.style.transform = `translateX(-50%) rotate(${deg}deg)`;
+}
+
+function startCompass() {
+  if (compassStarted) return;
+
+  window.addEventListener("deviceorientationabsolute", handleOrientation, true);
+  window.addEventListener("deviceorientation", handleOrientation, true);
+}
+
+let BUFFER_SIZE = 4; // fast initial response
+
+//ROUTE SNAPPING SETTINGS
+const SNAP_RADIUS = 6;        // meters
+const STOP_SNAP_DISTANCE = 6;  // meters before destination
+
+
+//START GPS (background tracking only)
+showToast("Finding your location…");
+
+map.locate({
+  watch: true,
+  enableHighAccuracy: true,
+  maximumAge: 0,
+  timeout: 20000,
+  setView: false
+});
+
+
+/* GPS VALIDATION */
+function isValidGPS(newPos, accuracy, timestamp) {
+  const isLaptop = !("ontouchstart" in window);
+
+  // FIRST  allow rough location for fast loading the later filter it 
+  if (!lastGoodPos && accuracy > 120) return false;
+
+  // AFTER LOCK  be strict note this help the speed of user location markerb
+  if (lastGoodPos && !isLaptop && accuracy > 25) return false;
+  if (lastGoodPos && isLaptop && accuracy > 120) return false;
+
+  if (!lastGoodPos) return true;
+
+  const distance = map.distance(lastGoodPos, newPos);
+  const timeDiff = (timestamp - lastTimestamp) / 1000;
+  if (timeDiff <= 0) return false;
+
+  const speed = distance / timeDiff;
+  if (!isLaptop && speed > 4) return false;
+
+  return true;
+}
+
+// smooth position
+function smoothPosition(pos) {
+
+  // If user almost not moving → be very strict
+  if (lastGoodPos) {
+    const d = pos.distanceTo(lastGoodPos);
+
+    // Standing still → ignore tiny GPS noise
+    if (d < 1.2) {
+      return lastGoodPos;
+    }
+  }
+
+  positionBuffer.push(pos);
+
+  if (positionBuffer.length > BUFFER_SIZE) {
+    positionBuffer.shift();
+  }
+
+  let lat = 0, lng = 0;
+
+  positionBuffer.forEach(p => {
+    lat += p.lat;
+    lng += p.lng;
+  });
+
+  return L.latLng(
+    lat / positionBuffer.length,
+    lng / positionBuffer.length
+  );
+}
+
+// predict motion
+function predictPosition(prev, current) {
+  return L.latLng(
+    current.lat + (current.lat - prev.lat) * 0.18,
+    current.lng + (current.lng - prev.lng) * 0.18
+  );
+}
+
+ // getting the nearest route point to snap user marker
+function getNearestPointOnRoute(latlng, routeCoords) {
+  let closest = routeCoords[0];
+  let minDist = latlng.distanceTo(closest);
+
+  for (let i = 1; i < routeCoords.length; i++) {
+    const p = routeCoords[i];
+    const d = latlng.distanceTo(p);
+
+    if (d < minDist) {
+      minDist = d;
+      closest = p;
+    }
+  }
+
+  return {
+    point: closest,
+    distance: minDist
+  };
+}
+
+/* LOCATION UPDATE */
+map.on("locationfound", e => {
+  const rawPos = e.latlng;
+  let accuracy = e.accuracy || 999;
+  const timestamp = e.timestamp;
+
+  const isLaptop = !("ontouchstart" in window);
+
+  // Relax laptop accuracy
+  if (isLaptop && accuracy > 100) accuracy = 80;
+
+  // Validate GPS
+  if (!isValidGPS(rawPos, accuracy, timestamp)) return;
+
+  // Smooth + predict
+  let processedPos = smoothPosition(rawPos);
+
+  if (!lastGoodPos && accuracy > 40) {
+  showToast("Improving GPS lock...");
+  return;
+  }
+
+
+  if (lastGoodPos) {
+    BUFFER_SIZE = 5;
+    processedPos = predictPosition(lastGoodPos, processedPos);
+  }
+
+  // route snapping logic
+  if (routeLine) {
+    const routeCoords = routeLine.getLatLngs();
+    const nearest = getNearestPointOnRoute(processedPos, routeCoords);
+
+    const distanceToEnd =
+      processedPos.distanceTo(routeCoords[routeCoords.length - 1]);
+
+    // human walking behavior
+    const isVeryCloseToRoute = nearest.distance <= 5;
+    const isMoving = processedPos.distanceTo(lastGoodPos) > 0.8;
+
+    const shouldSnap =
+      isVeryCloseToRoute &&
+      distanceToEnd > STOP_SNAP_DISTANCE &&
+      isMoving;
+
+    if (shouldSnap) {
+      // Smooth blend instead of hard lock
+      processedPos = L.latLng(
+        processedPos.lat * 0.4 + nearest.point.lat * 0.6,
+        processedPos.lng * 0.4 + nearest.point.lng * 0.6
+      );
+    }
+  }
+
+
+  // creat marker
+  if (!userMarker) {
+    showToast("Location locked");
+
+    const userIcon = L.divIcon({
+      className: "",
+      html: `
+        <div class="user-location">
+          <div class="user-heading"></div>
+        </div>
+      `,
+      iconSize: [18, 18],
+      iconAnchor: [9, 9]
+    });
+
+    userMarker = L.marker(processedPos, {
+      icon: userIcon,
+      interactive: false
+    }).addTo(map);
+
+    // accuracy circle
+    accuracyCircle = L.circle(processedPos, {
+      radius: Math.max(accuracy, 35), // bigger on phones
+      color: "#60a5fa",
+      fillColor: "#60a5fa",
+      fillOpacity: 0.18,
+      weight: 2,
+      interactive: false
+    }).addTo(map);
+
+  } else {
+    // adding a tiny animation to make it feel alive.
+    userMarker.setLatLng(processedPos, {
+      animate: true,
+      duration: 0.4
+    });
+    accuracyCircle.setLatLng(processedPos);
+    accuracyCircle.setRadius(Math.max(accuracy, 35));
+  }
+
+  lastGoodPos = processedPos;
+  lastTimestamp = timestamp;
+});
+
+/* ERROR HANDLING */
+map.on("locationerror", e => {
+  console.warn("GPS error:", e.message);
+  showToast("waiting for location");
+});
+
+// iOS requires user interaction to unlock compass so adding a handler for that
+["click", "touchstart"].forEach(evt => {
+  window.addEventListener(
+    evt,
+    () => {
+      tryAutoEnableCompass();
+    },
+    { once: true }
+  );
+});
+
+
+/* LOCATE ME BUTTON */
+const locateBtn = document.getElementById("locateBtn");
+
+locateBtn.onclick = () => {
+
+  tryAutoEnableCompass(); //enabling device compass when click locate me
+
+  if (!userMarker) {
+    showToast("Getting GPS signal...");
+    return;
+  }
+
+  map.flyTo(userMarker.getLatLng(), 18, {
+    animate: true,
+    duration: 1
+  });
+};
+
+
+/* ROUTING */
+let routeStart = null;
+let routeEnd = null;
+let routeLine = null;
+
+/* Stop Nav Button */
+const stopBtn = document.getElementById("stopNavigationBtn");
+
+function setStart(lat,lng){
+  routeStart = L.latLng(lat,lng);
+  showToast("Start set");
+}
+function setEnd(lat,lng){
+  routeEnd = L.latLng(lat,lng);
+  showToast("Destination set");
+}
+
+function navigateFromPopup(lat, lng) {
+  // Find the building marker once
+  const found = buildingMarkers.find(
+    b => b.lat === lat && b.lng === lng
+  );
+
+  // Highlight the building being navigated to
+  if (found) {
+    dimOtherMarkers(found.marker);
+  }
+
+  setEnd(lat, lng);
+
+  if (!routeStart && userMarker) {
+    routeStart = userMarker.getLatLng();
+  }
+
+  if (!routeStart) {
+    showToast("Waiting for GPS...");
+    return;
+  }
+
+  navigateRoute();
+}
+
+
+
+async function navigateRoute(){
+  if(!routeStart || !routeEnd){ showToast("Missing location"); return; }
+
+  const url = `${ROUTE_URL}?start=${routeStart.lat},${routeStart.lng}&end=${routeEnd.lat},${routeEnd.lng}`;
+  const res = await fetch(url);
+  if(!res.ok){ showToast("Route failed"); return; }
+
+  const data = await res.json();
+  const coords = data.coordinates.map(c => [c[1],c[0]]);
+
+  if(routeLine) map.removeLayer(routeLine);
+
+  routeLine = L.polyline(coords, { color:"#60a5fa", weight:6 }).addTo(map);
+  map.fitBounds(routeLine.getBounds(),{padding:[40,120]});
+
+  document.getElementById("distVal").innerText = Math.round(data.distance)+" m";
+  document.getElementById("durVal").innerText = data.duration;
+
+  document.getElementById("routeInfo").style.display="block";
+
+  /* show stop button */
+  stopBtn.style.display = "block";
+}
+
+/* STOP NAVIGATION */
+stopBtn.onclick = () => {
+  if(routeLine) map.removeLayer(routeLine);
+  routeLine=null;
+  routeStart=null;
+  routeEnd=null;
+  document.getElementById("routeInfo").style.display="none";
+  stopBtn.style.display="none";
+  restoreMarkerStyles();
+  showToast("Navigation cleared");
+};
+
+/* TOAST */
+function showToast(msg){
+  const t=document.getElementById("toast");
+  t.innerText=msg;
+  t.style.display="block";
+  clearTimeout(t._hide);
+  t._hide=setTimeout(()=>t.style.display="none",2000);
+}
+
+/* FOOTER TAG */
+map.attributionControl.addAttribution("&nbsp;@University of Bamenda ");
+
+
+/* ABOUT MODAL */
+document.getElementById("aboutBtn").onclick = () => {
+  document.getElementById("aboutModal").style.display = "flex";
+}
+document.getElementById("closeAbout").onclick = () => {
+  document.getElementById("aboutModal").style.display = "none";
+}
+
+/* SPLASH EXIT */
+window.onload = () => {
+  setTimeout(()=>{
+    const s=document.getElementById("splash");
+    s.style.transition="opacity 450ms";
+    s.style.opacity="0";
+    setTimeout(()=>s.remove(),500);
+  },2000);
+};
+
+
+/* INSTALL LOGIC */
+let deferredPrompt;
+const installBtn = document.getElementById("installBtn");
+
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  deferredPrompt = e;
+
+  // ONLY show if not already installed
+  if (!isInStandalone()) {
+    installBtn.style.display = "block";
+
+    // Analytics: prompt shown
+    gtag('event', 'pwa_install_prompt_shown');
+  }
+});
+
+window.addEventListener("appinstalled", () => {
+  installBtn.style.display = "none";
+  localStorage.setItem("ios_installed", "yes");
+  updateInstallUI();
+
+  // Analytics: user actually installed
+  gtag('event', 'pwa_installed');
+});
+
+installBtn.onclick = async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const result = await deferredPrompt.userChoice;
+
+  if (result.outcome === "accepted") {
+    gtag('event', 'pwa_installed');
+  }
+
+  deferredPrompt = null;
+  installBtn.style.display = "none";
+};
+
+//IOS install Guide
+function isIos() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
+function isInStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone === true;
+}
+
+function updateInstallUI() {
+  const iosGuide = document.getElementById("iosInstall");
+  const installBtn = document.getElementById("installBtn");
+
+  // ===== ALREADY INSTALLED CHECK =====
+  const installed =
+    window.navigator.standalone === true ||
+    window.matchMedia('(display-mode: standalone)').matches ||
+    localStorage.getItem("ios_installed") === "yes";
+
+  if (installed) {
+    iosGuide.style.display = "none";
+    installBtn.style.display = "none";
+    return;
+  }
+
+  // ===== IOS DEVICE =====
+  if (isIos()) {
+    iosGuide.style.display = "block";
+    installBtn.style.display = "none";
+
+    // Close on tap anywhere
+    setTimeout(() => {
+      document.addEventListener("click", hideIosGuide, { once: true });
+      document.addEventListener("touchstart", hideIosGuide, { once: true });
+    }, 300);
+
+  } else {
+    iosGuide.style.display = "none";
+  }
+}
+
+function hideIosGuide() {
+  const iosGuide = document.getElementById("iosInstall");
+
+  iosGuide.style.display = "none";
+
+  // Remember user dismissed OR installed
+  localStorage.setItem("ios_installed", "yes");
+}
+
+
+// Re-check when user returns to app
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    updateInstallUI();
+  }
+});
+
+// Run on load
+updateInstallUI();
+
+// Also check when app mode changes
+window.matchMedia('(display-mode: standalone)')
+  .addEventListener('change', updateInstallUI);
+
+</script>
+
+<script>
+// ===============================
+// helper funtions
+// ===============================
+
+// Building icons
+const normalBuildingIcon = L.icon({
+  iconUrl:"https://cdn-icons-png.flaticon.com/512/854/854878.png",
+  iconSize:[42,42],
+  iconAnchor:[21,42],
+  popupAnchor:[0,-42]
+});
+
+const activeBuildingIcon = L.icon({
+  iconUrl:"https://cdn-icons-png.flaticon.com/512/854/854878.png",
+  iconSize:[56,56],
+  iconAnchor:[28,56],
+  popupAnchor:[0,-56]
+});
+
+// Focus on building funtion works with marker cluster
+function focusBuilding(marker, lat, lng, zoom = 19) {
+  map.setView([lat, lng], zoom, { animate: true });
+
+  cluster.zoomToShowLayer(marker, () => {
+    setTimeout(() => {
+      marker.openPopup();
+
+      // ---- SMART CENTERING ----
+      const mapSize = map.getSize();
+      const offsetY = mapSize.y * 0.99; // 99% from top
+
+      // Instead of panBy only vertically, use panInside
+      map.panInside(marker.getLatLng(), {
+        paddingTopLeft: [100, offsetY],   // push down from header
+        paddingBottomRight: [10, 40],   // keep some margin at bottom/right
+        animate: true
+      });
+
+    }, 420);
+  });
+}
+
+
+// Dim logic
+function dimOtherMarkers(active){
+  cluster.eachLayer(m=>{
+    if(m===active){
+      m.setOpacity(1);
+      m.setIcon(activeBuildingIcon);
+      m.setZIndexOffset(1000);
+    }else{
+      m.setOpacity(0.3);
+      m.setIcon(normalBuildingIcon);
+      m.setZIndexOffset(0);
+    }
+  });
+}
+
+function restoreMarkerStyles(){
+  cluster.eachLayer(m=>{
+    m.setOpacity(1);
+    m.setIcon(normalBuildingIcon);
+    m.setZIndexOffset(0);
+  });
+}
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/static/pwa/service-worker.js')
+      .then(() => console.log('SW registered'))
+      .catch(err => console.log('SW error:', err));
+  });
+}
+</script>
+
+
+</body>
+</html>
