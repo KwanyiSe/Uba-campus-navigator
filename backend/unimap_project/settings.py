@@ -40,7 +40,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 INSTALLED_APPS = [
     # Third-party apps
     'rest_framework',
-    'cloudinary',
+    'corsheaders',
+    'cloudinary', #currently not working 
     'cloudinary_storage',
     
     # Your apps
