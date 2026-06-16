@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     
     #new apps still in development
     'accounts.apps.AccountsConfig',
+    'feedback.apps.FeedbackConfig',
     # 'academic.apps.AcademicConfig',
     # 'attendance.apps.AttendanceConfig',
     # 'associate.apps.AssociateConfig',

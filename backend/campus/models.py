@@ -4,7 +4,6 @@ from django.db import models
 
 
 
-
 class University(models.Model):
     """University Model allow scalability allow SaaS achitecture"""
    
@@ -59,38 +58,50 @@ class Building(models.Model):
     
 
 class SiteVisit(models.Model):
-    """
-    Stores one record per unique browser session.
-    We use Django's session_key as a proxy for a unique visitor.
-    """
 
-    # Unique browser session identifier
-    session_key = models.CharField(max_length=40, unique=True)
+    session_key = models.CharField(
+        max_length=40,
+        unique=True
+    )
 
-    # When the visitor first appeared on the site
-    first_visit = models.DateTimeField(auto_now_add=True)
+    first_visit = models.DateTimeField(
+        auto_now_add=True
+    )
 
-    # Updated automatically on every request
-    last_visit = models.DateTimeField(auto_now=True)
-    
-    building = models.ForeignKey(Building, on_delete=models.CASCADE, null=True, blank=True)
+    last_visit = models.DateTimeField(
+        auto_now=True
+    )
+
+    university = models.ForeignKey(
+        University,
+        on_delete=models.CASCADE,
+        related_name="site_visits",
+        null=True,
+        blank=True
+    )
 
     def __str__(self):
         return self.session_key
-
-
+    
+    
 class DailyStats(models.Model):
-    """
-    Stores aggregated visitor counts per day.
-    This prevents numbers from dropping due to session expiry.
-    """
-    date = models.DateField(unique=True)
-    visitors = models.PositiveIntegerField(default=0)
-    building = models.ForeignKey(Building, on_delete=models.CASCADE, null=True, blank=True)
 
+    university = models.ForeignKey(
+        University,
+        on_delete=models.CASCADE,
+        related_name="daily_stats"
+    )
+
+    date = models.DateField()
+
+    visitors = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        unique_together = ("university", "date")
 
     def __str__(self):
-        return str(self.date)
+        return f"{self.university.short_name} - {self.date}"
+    
 
 class CampusAdminUser(models.Model):
     # each user has exacly one CampusAdminUser profile
