@@ -7,6 +7,8 @@ from .models import Building, University
 from .serializers import BuildingSerializer
 from unimap_project import settings
 from openrouteservice import convert
+from django.contrib.auth import logout
+from django.shortcuts import redirect
 import requests
 import json
 
@@ -151,3 +153,7 @@ def format_duration(seconds: float):
     minutes = seconds // 60
     remaining = seconds % 60
     return f"{minutes} min" if remaining == 0 else f"{minutes} min {remaining} sec"
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')

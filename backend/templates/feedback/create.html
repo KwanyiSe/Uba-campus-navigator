@@ -1,0 +1,57 @@
+{% extends “base.html” %}
+
+{% block content %}
+
+<h2>Submit Feedback</h2>
+
+<form method=”post”>
+    {% csrf_token %}
+
+    <div>
+        <label>Category</label><br>
+        <select name=”category”>
+            <option>Map Issue</option>
+            <option>Bug Report</option>
+            <option>Suggestion</option>
+            <option>Complaint</option>
+        </select>
+    </div>
+
+    <br>
+
+    <div>
+        <label>Title</label><br>
+        <input type=”text” name=”title”>
+    </div>
+
+    <br>
+
+    <div>
+        <label>Message</label><br>
+        <textarea name=”message” rows=”5”></textarea>
+    </div>
+
+    <br>
+
+    {% if not user.is_authenticated %}
+    <div>
+        <label>Name</label><br>
+        <input type=”text” name=”name”>
+    </div>
+
+    <br>
+
+    <div>
+        <label>Email</label><br>
+        <input type=”email” name=”email”>
+    </div>
+
+    <br>
+    {% endif %}
+
+    <button type=”submit”>Submit Feedback</button>
+
+</form>
+
+{% endblock %}
+

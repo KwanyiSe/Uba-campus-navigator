@@ -1,0 +1,209 @@
+{% extends 'home.html' %}
+
+{% block title %}Submit Feedback - Campus Portal{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --primary-blue: #2563eb;
+        --focus-blue: #3b82f6;
+        --gradient-blue: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        --text-main: #1e293b;
+        --text-secondary: #64748b;
+        --border-color: #cbd5e1;
+        --card-white: #ffffff;
+    }
+
+    .feedback-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 60px 20px;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background-color: #fafafa;
+        min-height: 85vh;
+    }
+
+    .feedback-card {
+        background: var(--card-white);
+        border-radius: 24px;
+        box-shadow: 0 10px 30px rgba(37, 99, 235, 0.05), 0 1px 3px rgba(0, 0, 0, 0.02);
+        width: 100%;
+        max-width: 550px;
+        padding: 40px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .feedback-card h2 {
+        margin: 0;
+        color: var(--text-main);
+        font-size: 26px;
+        font-weight: 800;
+        text-align: center;
+        letter-spacing: -0.75px;
+    }
+
+    .subtitle {
+        color: var(--text-secondary);
+        text-align: center;
+        margin-top: 6px;
+        margin-bottom: 30px;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .feedback-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .form-row-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: var(--text-main);
+        font-size: 13px;
+        letter-spacing: 0.3px;
+    }
+
+    .form-group input, 
+    .form-group select, 
+    .form-group textarea {
+        padding: 12px 16px;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        font-size: 14px;
+        color: var(--text-main);
+        outline: none;
+        background-color: #fcffff;
+        font-family: inherit;
+        transition: all 0.2s ease;
+    }
+
+    .form-group input:focus, 
+    .form-group select:focus, 
+    .form-group textarea:focus {
+        border-color: var(--focus-blue);
+        background-color: #ffffff;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+    }
+
+    .form-group textarea {
+        resize: vertical;
+        min-height: 120px;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 10px;
+    }
+
+    .btn {
+        padding: 14px 20px;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        text-align: center;
+        font-size: 15px;
+        border: none;
+        flex: 1;
+        transition: all 0.2s ease;
+    }
+
+    .btn-submit {
+        background: var(--gradient-blue);
+        color: white;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+    }
+
+    .btn-submit:hover {
+        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.25);
+        opacity: 0.95;
+    }
+
+    .btn-cancel {
+        background-color: transparent;
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-cancel:hover {
+        background-color: #f8fafc;
+        color: var(--text-main);
+    }
+
+    @media (max-width: 500px) {
+        .form-row-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        .form-actions {
+            flex-direction: column-reverse;
+        }
+    }
+</style>
+
+<div class="feedback-container">
+    <div class="feedback-card">
+        <h2>Submit Feedback</h2>
+        <p class="subtitle">Help us improve the portal. Drop your suggestions, complaints, or bug reports below.</p>
+        
+        <form method="POST" action="./admin.html" class="feedback-form">
+            {% csrf_token %}
+            
+            {% if not user.is_authenticated %}
+                <div class="form-row-grid">
+                    <div class="form-group">
+                        <label for="name">NAME</label>
+                        <input type="text" id="name" name="name" placeholder="e.g. John Doe" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">EMAIL</label>
+                        <input type="email" id="email" name="email" placeholder="e.g. john@school.com" required>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <div class="form-group">
+                <label for="category">CATEGORY</label>
+                <select id="category" name="category" required>
+                    <option value="" disabled selected>Select feedback type</option>
+                    <option value="Suggestion">Suggestion / Idea</option>
+                    <option value="Bug Report">Website Error / Bug</option>
+                    <option value="Complaint">Campus Grievance</option>
+                    <option value="Inquiry">General Inquiry</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="title">TITLE / SUBJECT</label>
+                <input type="text" id="title" name="title" placeholder="Briefly summarize your topic" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="message">YOUR MESSAGE</label>
+                <textarea id="message" name="message" placeholder="Type your detailed message here..." required></textarea>
+            </div>
+            
+            <div class="form-actions">
+                <a href="./home.html" class="btn btn-cancel">Back to Home</a>
+                <button type="submit" class="btn btn-submit">Submit Feedback</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
