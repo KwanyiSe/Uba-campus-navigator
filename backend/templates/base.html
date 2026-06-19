@@ -1,0 +1,44 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unimap</title>
+  <link rel="stylesheet" href="{% static 'css/shared.css' %}">
+  <link rel="stylesheet" href="{% static 'css/unimap.css' %}">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <div class="logo">Unimap</div>
+      
+      <ul class="nav-links" id="navLinks">
+        <li><a href="/map">Map</a></li>
+        <li><a href="/feedback">Feedback</a></li>
+        
+        {% if user.is_authenticated %}
+          <li><a href="/my-feedback">My Feedback</a></li>
+          <li><a href="/profile">Profile</a></li>
+          <li><a href="/logout">Logout</a></li>
+        {% else %}
+          <li><a href="/login">Login</a></li>
+          <li><a href="/register">Register</a></li>
+        {% endif %}
+      </ul>
+      
+      <button class="hamburger" onclick="toggleNav()">☰</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <script>
+    function toggleNav() {
+      document.getElementById('navLinks').classList.toggle('show');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title>UniMap — Sign Up</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:      #1A56DB;
+      --blue-dark: #1341B2;
+      --blue-icon: #DBEAFE;
+      --bg:        #EFF4FF;
+      --text:      #111827;
+      --muted:     #6B7280;
+      --white:     #FFFFFF;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+    }
+
+    /* TOP WAVE */
+    .wave-top { width: 100%; height: 130px; flex-shrink: 0; }
+    .wave-top svg { width: 100%; height: 100%; display: block; }
+
+    /* HERO */
+    .hero {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 0 24px;
+      gap: 8px;
+      margin-top: -20px;
+    }
+    .hero-text h1 {
+      font-family: 'Nunito', sans-serif;
+      font-size: 36px;
+      font-weight: 900;
+      line-height: 1.15;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+    .hero-text h1 span { color: var(--blue); }
+    .hero-text p {
+      margin-top: 6px;
+      font-size: 13.5px;
+      color: var(--muted);
+    }
+
+    .illus { flex-shrink: 0; width: 155px; height: 160px; }
+    .illus svg { width: 100%; height: 100%; }
+
+    /* FORM */
+    .form {
+      padding: 20px 24px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      background: var(--white);
+      border-radius: 16px;
+      box-shadow: 0 2px 10px rgba(26,86,219,0.07);
+      position: relative;
+      overflow: hidden;
+    }
+    .input-icon {
+      width: 54px; height: 54px;
+      background: var(--blue-icon);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      color: var(--blue);
+      border-radius: 16px 0 0 16px;
+    }
+    .input-row input {
+      flex: 1; height: 54px;
+      border: none; outline: none;
+      background: transparent;
+      padding: 0 14px;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      color: var(--text);
+    }
+    .input-row input::placeholder { color: #9CA3AF; }
+
+    .eye-btn {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #9CA3AF;
+      display: flex;
+    }
+
+    .eye-btn:hover { color: var(--blue); }
+
+    /* SIGN UP BUTTON */
+    .btn-signup {
+      margin: 8px 24px 0;
+      width: calc(100% - 48px);
+      height: 54px;
+      background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+      color: #fff;
+      border: none;
+      border-radius: 30px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px;
+      box-shadow: 0 6px 20px rgba(26,86,219,0.35);
+      transition: transform .15s;
+    }
+    .btn-signup:active { transform: scale(0.97); }
+
+    /* LOGIN LINK */
+    .login-link {
+      text-align: center;
+      font-size: 13.5px;
+      color: var(--muted);
+      margin: 14px 0 0;
+    }
+    .login-link a {
+      color: var(--blue);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    /* BOTTOM AREA */
+    .bottom-area {
+      position: relative;
+      margin-top: 28px;
+      height: 120px;
+    }
+    .wave-bottom {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 110px;
+    }
+    .wave-bottom svg { width: 100%; height: 100%; display: block; }
+
+    .leaf { position: absolute; pointer-events: none; }
+
+    .sp {
+      position: absolute;
+      pointer-events: none;
+      animation: twinkle 2.8s ease-in-out infinite;
+    }
+    #pwd {
+      padding-right: 48px;
+    }
+
+    @keyframes twinkle {
+      0%,100% { opacity:.2; transform:scale(.7); }
+      50%      { opacity:.9; transform:scale(1); }
+    }
+    .sp svg path { fill: #2563EB; }
+  </style>
+</head>
+<body>
+
+<!-- TOP WAVE -->
+<div class="wave-top">
+  <svg viewBox="0 0 390 130" preserveAspectRatio="none">
+    <path d="M0 0 L390 0 L390 80 Q310 140 210 90 Q110 45 0 110 Z" fill="#1A56DB"/>
+    <path d="M0 0 L390 0 L390 72 Q300 130 195 82 Q90 38 0 100 Z" fill="#1341B2" opacity="0.55"/>
+  </svg>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-text">
+    <h1>Sign <span>up</span> <span style="font-size:20px; color:var(--blue);">♥</span></h1>
+    <p>Create your account<br>and get started! <span style = "color:var(--blue);" >✦</span></p>
+  </div>
+
+  <div class="illus">
+    <svg viewBox="0 0 155 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Circle backdrop -->
+      <circle cx="102" cy="85" r="50" fill="#DBEAFE" opacity="0.6"/>
+      <circle cx="102" cy="85" r="42" fill="#BFDBFE" opacity="0.5"/>
+      <!-- Dashed orbit -->
+      <ellipse cx="102" cy="110" rx="44" ry="12" stroke="#1A56DB" stroke-width="1.4"
+               stroke-dasharray="5 3.5" fill="none" opacity="0.5"/>
+
+      <!-- Lightbulb glow -->
+      <ellipse cx="100" cy="28" rx="14" ry="14" fill="#FEF08A" opacity="0.45"/>
+      <path d="M94 38 Q92 28 100 22 Q108 16 108 28 Q108 34 104 38Z" fill="#FDE68A"/>
+      <path d="M94 38 Q94 42 96 44 L104 44 Q106 42 106 38Z" fill="#FCD34D"/>
+      <rect x="96" y="44" width="8" height="3" rx="1.5" fill="#D97706"/>
+      <rect x="97" y="47" width="6" height="2" rx="1" fill="#D97706"/>
+      <line x1="100" y1="14" x2="100" y2="10" stroke="#FDE68A" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="110" y1="18" x2="113" y2="15" stroke="#FDE68A" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="90"  y1="18" x2="87"  y2="15" stroke="#FDE68A" stroke-width="1.5" stroke-linecap="round"/>
+
+      <!-- Graduation cap floating icon -->
+      <rect x="118" y="42" width="26" height="26" rx="7" fill="#1E3A8A" opacity="0.85"/>
+      <path d="M131 51 L140 55 L131 59 L122 55Z" fill="white"/>
+      <rect x="138" y="55" width="2" height="6" rx="1" fill="white"/>
+      <path d="M126 57 L126 62 Q131 65 136 62 L136 57" fill="none" stroke="white"
+            stroke-width="1.3" stroke-linecap="round"/>
+
+      <!-- Person bubble -->
+      <circle cx="68" cy="52" r="14" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1.5"/>
+      <circle cx="68" cy="48" r="4" fill="#1A56DB" opacity="0.7"/>
+      <path d="M62 58 Q64 54 68 54 Q72 54 74 58" fill="#1A56DB" opacity="0.7"/>
+
+      <!-- Shadow -->
+      <ellipse cx="88" cy="148" rx="20" ry="4" fill="rgba(26,86,219,0.1)"/>
+      <!-- Legs -->
+      <rect x="80" y="120" width="9" height="26" rx="4.5" fill="#1E293B"/>
+      <rect x="90" y="120" width="9" height="22" rx="4.5" fill="#1E293B"/>
+      <!-- Shoes -->
+      <ellipse cx="84" cy="146" rx="8" ry="4" fill="#0F172A"/>
+      <ellipse cx="94" cy="142" rx="8" ry="4" fill="#0F172A"/>
+      <!-- Waist -->
+      <rect x="76" y="110" width="28" height="14" rx="6" fill="#1E293B"/>
+      <!-- Lab coat -->
+      <rect x="72" y="78" width="34" height="38" rx="12" fill="#F8FAFC"/>
+      <path d="M86 78 L89 90 L92 78" stroke="#CBD5E1" stroke-width="1.2" fill="none"/>
+      <rect x="83" y="79" width="8" height="20" rx="2" fill="#818CF8" opacity="0.7"/>
+      <!-- Raised arm -->
+      <path d="M72 90 Q60 78 64 66" stroke="#F8FAFC" stroke-width="9" stroke-linecap="round" fill="none"/>
+      <path d="M72 90 Q60 78 64 66" stroke="#E2E8F0" stroke-width="8" stroke-linecap="round" fill="none"/>
+      <circle cx="65" cy="62" r="5" fill="#FBBF9B"/>
+      <rect x="63" y="50" width="4" height="14" rx="2" fill="#FBBF9B"/>
+      <!-- Other arm -->
+      <path d="M106 95 Q115 100 112 110" stroke="#F8FAFC" stroke-width="9" stroke-linecap="round" fill="none"/>
+      <path d="M106 95 Q115 100 112 110" stroke="#E2E8F0" stroke-width="8" stroke-linecap="round" fill="none"/>
+      <circle cx="112" cy="113" r="5" fill="#FBBF9B"/>
+      <!-- Head -->
+      <circle cx="89" cy="66" r="16" fill="#FBBF9B"/>
+      <!-- Hair -->
+      <path d="M74 60 Q75 46 89 44 Q103 44 104 58" fill="#1E293B"/>
+      <path d="M74 60 Q70 75 72 90 Q74 96 76 92 Q74 82 76 70Z" fill="#1E293B"/>
+      <path d="M104 58 Q108 74 106 88 Q104 94 102 90 Q104 80 102 68Z" fill="#1E293B"/>
+      <ellipse cx="73" cy="68" rx="3.5" ry="4.5" fill="#F5A983"/>
+      <!-- Face -->
+      <circle cx="85" cy="66" r="1.4" fill="#1E293B"/>
+      <circle cx="93" cy="66" r="1.4" fill="#1E293B"/>
+      <path d="M85 72 Q89 75 93 72" stroke="#1E293B" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+      <circle cx="83" cy="71" r="3" fill="#F87171" opacity="0.25"/>
+      <circle cx="95" cy="71" r="3" fill="#F87171" opacity="0.25"/>
+
+      <!-- Sparkle dots -->
+      <path d="M50 30 L51.2 36 L57 37 L51.2 38 L50 44 L48.8 38 L43 37 L48.8 36Z"
+            fill="#1A56DB" opacity="0.5"/>
+      <path d="M140 100 L141 104 L145 105 L141 106 L140 110 L139 106 L135 105 L139 104Z"
+            fill="#1A56DB" opacity="0.4"/>
+      <circle cx="55" cy="110" r="4" fill="#BFDBFE" opacity="0.7"/>
+      <circle cx="140" cy="70" r="3" fill="white" opacity="0.6"/>
+    </svg>
+  </div>
+</div>
+
+<!-- FORM -->
+<div class="form">
+  <form method="POST" action="">
+    {% csrf_token %} 
+
+  <!-- Name -->
+  <div class="input-row">
+    <div class="input-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+      </svg>
+    </div>
+    <input type="text" placeholder="Name" autocomplete="name"/>
+  </div>
+
+  <!-- Email -->
+  <div class="input-row">
+    <div class="input-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <rect x="2" y="4" width="20" height="16" rx="3"/>
+        <path d="M2 8l10 6 10-6"/>
+      </svg>
+    </div>
+    <input type="email" placeholder="Email" autocomplete="email"/>
+  </div>
+
+  <!-- Matricule -->
+  <div class="input-row">
+    <div class="input-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <rect x="2" y="4" width="20" height="16" rx="2"/>
+        <circle cx="8" cy="12" r="2.5"/>
+        <line x1="13" y1="9"  x2="20" y2="9"/>
+        <line x1="13" y1="12" x2="20" y2="12"/>
+        <line x1="13" y1="15" x2="17" y2="15"/>
+      </svg>
+    </div>
+    <input type="text" placeholder="Matricule" autocomplete="off"/>
+  </div>
+
+  <!-- Department -->
+ <div class="input-row">
+      <div class="input-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+          <path d="M9 22v-4h6v4"/>
+          <path d="M8 6h.01"/>
+          <path d="M16 6h.01"/>
+          <path d="M8 10h.01"/>
+          <path d="M16 10h.01"/>
+          <path d="M8 14h.01"/>
+          <path d="M16 14h.01"/>
+        </svg>
+      </div>
+      <input type="text" placeholder="Department" autocomplete="off"/>
+    </div>
+
+  <!-- Level -->
+  <div class="input-row">
+    <div class="input-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <line x1="18" y1="20" x2="18" y2="10"/>
+        <line x1="12" y1="20" x2="12" y2="4"/>
+        <line x1="6"  y1="20" x2="6"  y2="14"/>
+      </svg>
+    </div>
+    <input type="text" placeholder="Level" autocomplete="off"/>
+  </div>
+
+  <!-- School -->
+  <div class="input-row">
+    <div class="input-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M22 10l-10-7L2 10v12h7v-6h6v6h7z"/>
+      </svg>
+    </div>
+    <input type="text" placeholder="School" autocomplete="off"/>
+  </div>
+
+  <!-- Password -->
+  <div class="input-row">
+    <div class="input-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </div>
+    <input type="password" id="pwd" placeholder="Password" autocomplete="new-password"/>
+    <button class="eye-btn" type="button" onclick="togglePwd()" aria-label="Show password">
+      <svg id="eye-show" width="20" height="20" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+      <svg id="eye-hide" width="20" height="20" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="display:none">
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+        <line x1="1" y1="1" x2="23" y2="23"/>
+      </svg>
+    </button>
+    
+  </div>
+
+</div>
+
+<!-- SIGN UP BUTTON -->
+<button class="btn-signup" type="button">
+  Sign up
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+       stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="5" y1="12" x2="19" y2="12"/>
+    <polyline points="12 5 19 12 12 19"/>
+  </svg>
+</button>
+
+  </form>
+
+<p class="login-link">
+  Already have an account? <a href="{% url 'login' %}">Log in</a>
+</p>
+
+<!-- BOTTOM DECORATION -->
+<div class="bottom-area">
+
+  <div class="sp" style="bottom:75px; right:28px; animation-delay:0s">
+    <svg width="13" height="13" viewBox="0 0 16 16"><path d="M8 0L9.2 6.8L16 8L9.2 9.2L8 16L6.8 9.2L0 8L6.8 6.8Z"/></svg>
+  </div>
+  <div class="sp" style="bottom:55px; right:58px; animation-delay:.7s">
+    <svg width="8" height="8" viewBox="0 0 16 16"><path d="M8 0L9.2 6.8L16 8L9.2 9.2L8 16L6.8 9.2L0 8L6.8 6.8Z"/></svg>
+  </div>
+  <div class="sp" style="bottom:90px; left:45px; animation-delay:1.3s">
+    <svg width="10" height="10" viewBox="0 0 16 16"><path d="M8 0L9.2 6.8L16 8L9.2 9.2L8 16L6.8 9.2L0 8L6.8 6.8Z"/></svg>
+  </div>
+
+  <!-- Leaves (same 3-leaf style as login) -->
+  <div class="leaf" style="bottom:62px; left:8px; opacity:0.28; transform:rotate(-10deg)">
+    <svg width="34" height="48" viewBox="0 0 52 72" fill="none">
+      <path d="M26 70 C26 70 2 50 4 28 C6 10 20 4 26 2 C32 4 46 10 48 28 C50 50 26 70 26 70Z" fill="#1A56DB"/>
+      <line x1="26" y1="70" x2="26" y2="4" stroke="#EFF4FF" stroke-width="1.2" opacity="0.4"/>
+      <path d="M26 30 Q14 22 10 14" stroke="#EFF4FF" stroke-width="1" opacity="0.3"/>
+      <path d="M26 42 Q38 34 42 24" stroke="#EFF4FF" stroke-width="1" opacity="0.3"/>
+    </svg>
+  </div>
+  <div class="leaf" style="bottom:88px; left:28px; opacity:0.2; transform:rotate(15deg)">
+    <svg width="24" height="34" viewBox="0 0 52 72" fill="none">
+      <path d="M26 70 C26 70 2 50 4 28 C6 10 20 4 26 2 C32 4 46 10 48 28 C50 50 26 70 26 70Z" fill="#1A56DB"/>
+      <line x1="26" y1="70" x2="26" y2="4" stroke="#EFF4FF" stroke-width="1.2" opacity="0.4"/>
+    </svg>
+  </div>
+  <div class="leaf" style="bottom:75px; left:44px; opacity:0.15; transform:rotate(35deg)">
+    <svg width="18" height="26" viewBox="0 0 52 72" fill="none">
+      <path d="M26 70 C26 70 2 50 4 28 C6 10 20 4 26 2 C32 4 46 10 48 28 C50 50 26 70 26 70Z" fill="#1A56DB"/>
+    </svg>
+  </div>
+
+  <div class="wave-bottom">
+    <svg viewBox="0 0 390 110" preserveAspectRatio="none">
+      <path d="M390 110 L0 110 L0 70 Q100 20 200 65 Q300 105 390 40 Z" fill="#1A56DB" opacity="0.85"/>
+      <path d="M390 110 L0 110 L0 80 Q110 35 215 72 Q310 105 390 52 Z" fill="#1341B2" opacity="0.5"/>
+    </svg>
+  </div>
+
+</div>
+
+<script>
+  function togglePwd() {
+    const inp  = document.getElementById('pwd');
+    const show = document.getElementById('eye-show');
+    const hide = document.getElementById('eye-hide');
+    if (inp.type === 'password') {
+      inp.type = 'text';
+      show.style.display = 'none';
+      hide.style.display = 'block';
+    } else {
+      inp.type = 'password';
+      show.style.display = 'block';
+      hide.style.display = 'none';
+    }
+  }
+</script>
+
+</body>
+</html>

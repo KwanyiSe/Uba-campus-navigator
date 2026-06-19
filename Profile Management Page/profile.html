@@ -1,0 +1,168 @@
+<style>
+    :root {
+        --primary-color: #4a90e2;
+        --text-dark: #333333;
+        --text-muted: #777777;
+        --bg-card: #ffffff;
+        --border-color: #e1e4e8;
+    }
+
+    .profile-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 40px 20px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .profile-card {
+        background: var(--bg-card);
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        width: 100%;
+        max-width: 550px;
+        padding: 30px;
+        border: 1px solid var(--border-color);
+    }
+
+    .profile-card h2 {
+        margin-top: 0;
+        color: var(--text-dark);
+        font-size: 24px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .profile-card hr {
+        border: 0;
+        border-top: 1px solid var(--border-color);
+        margin-bottom: 25px;
+    }
+
+    .profile-details {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        margin-bottom: 30px;
+    }
+
+    .detail-group {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 12px;
+        border-bottom: 1px dashed var(--border-color);
+    }
+
+    /* Target the last item to remove the bottom border line */
+    .detail-group:last-child {
+        border-bottom: none;
+    }
+
+    .label {
+        font-weight: 600;
+        color: var(--text-dark);
+        font-size: 15px;
+    }
+
+    .value {
+        color: var(--text-muted);
+        font-size: 15px;
+        text-align: right;
+    }
+
+    .text-muted-italic {
+        color: #9aa0a6;
+        font-style: italic;
+    }
+
+    .profile-actions {
+        display: flex;
+        justify-content: center;
+        margin-top: 10px;
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        color: white;
+        text-decoration: none;
+        padding: 12px 30px;
+        border-radius: 6px;
+        font-weight: 600;
+        transition: background 0.2s ease;
+        text-align: center;
+        display: inline-block;
+        width: 100%;
+    }
+
+    .btn-primary:hover {
+        background-color: #357abd;
+    }
+
+    /* Mobile Responsive adjustments */
+    @media (max-width: 480px) {
+        .detail-group {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+        }
+        .value {
+            text-align: left;
+        }
+    }
+</style>
+
+<div class="profile-container">
+    <div class="profile-card">
+        <h2>User Profile</h2>
+        <hr>
+        
+        <div class="profile-details">
+            <div class="detail-group">
+                <span class="label">Username:</span>
+                <span class="value">{{ user.username }}</span>
+            </div>
+            
+            <div class="detail-group">
+                <span class="label">Role:</span>
+                <span class="value">{{ user.role }}</span>
+            </div>
+
+            <div class="detail-group">
+                <span class="label">University:</span>
+                <span class="value">{{ user.university }}</span>
+            </div>
+            
+            <div class="detail-group">
+                <span class="label">School:</span>
+                <span class="value">{{ user.school }}</span>
+            </div>
+            
+            <div class="detail-group">
+                <span class="label">Department:</span>
+                <span class="value">{{ user.department }}</span>
+            </div>
+            
+            <div class="detail-group">
+                <span class="label">Level:</span>
+                <span class="value">{{ user.level }}</span>
+            </div>
+            
+            <div class="detail-group">
+                <span class="label">Matricule:</span>
+                <span class="value">
+                    {% if user.matricule %}
+                        {{ user.matricule }}
+                    {% else %}
+                        <span class="text-muted-italic">Not provided yet</span>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        
+        <div class="profile-actions">
+            <a href="{% url 'profile_edit' %}" class="btn btn-primary">Edit Profile</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

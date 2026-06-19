@@ -54,13 +54,14 @@ INSTALLED_APPS = [
     # 'attendance.apps.AttendanceConfig',
     # 'associate.apps.AssociateConfig',
         
-    # Default Django apps
+    # Default Django appsjj
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'users',
 ]
 
 # MIDDLEWARE
