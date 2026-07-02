@@ -1,4 +1,4 @@
-
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,19 +13,8 @@
     <nav class="navbar">
       <div class="logo">Unimap</div>
       
-      <ul class="nav-links" id="navLinks">
-        <li><a href="/map">Map</a></li>
-        <li><a href="/feedback">Feedback</a></li>
-        
-        {% if user.is_authenticated %}
-          <li><a href="/my-feedback">My Feedback</a></li>
-          <li><a href="/profile">Profile</a></li>
-          <li><a href="/logout">Logout</a></li>
-        {% else %}
-          <li><a href="/login">Login</a></li>
-          <li><a href="/register">Register</a></li>
-        {% endif %}
-      </ul>
+      <!-- Removed all nav links. Clean header now -->
+      <ul class="nav-links" id="navLinks"></ul>
       
       <button class="hamburger" onclick="toggleNav()">☰</button>
     </nav>

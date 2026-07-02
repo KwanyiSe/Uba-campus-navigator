@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home - Campus Portal{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --primary-blue: #2563eb;
+        --hover-blue: #1d4ed8;
+        --light-blue-bg: #f0f5ff;
+        --text-main: #1e293b;
+        --text-secondary: #64748b;
+        --card-white: #ffffff;
+        --border-subtle: #e2e8f0;
+    }
+
+    .home-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 60px 20px;
+        font-family: 'Inter', sans-serif;
+        background-color: #fafafa;
+        min-height: 85vh;
+    }
+
+    .brand-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 35px;
+        text-align: center;
+    }
+
+    .logo-placeholder {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        border-radius: 18px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2);
+        margin-bottom: 20px;
+        color: white;
+        font-weight: 800;
+        font-size: 24px;
+        border: 4px solid white;
+    }
+
+    .logo-placeholder img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        border-radius: 14px;
+    }
+
+    .brand-header h1 {
+        font-size: 34px;
+        color: var(--text-main);
+        font-weight: 800;
+        letter-spacing: -0.75px;
+        margin: 0 0 10px 0;
+    }
+
+    .brand-header p {
+        color: var(--text-secondary);
+        font-size: 16px;
+        max-width: 550px;
+        margin: 0;
+        line-height: 1.6;
+    }
+
+    .section-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin: 40px 0 20px 0;
+        text-align: center;
+    }
+
+    .auth-prompt-card {
+        background: var(--card-white);
+        border-radius: 24px;
+        box-shadow: 0 15px 35px rgba(37, 99, 235, 0.04), 0 1px 3px rgba(0, 0, 0, 0.01);
+        border: 1px solid var(--border-subtle);
+        padding: 40px;
+        text-align: center;
+        width: 100%;
+        max-width: 420px;
+        transition: transform 0.3s ease;
+        margin-bottom: 20px;
+    }
+
+    .auth-prompt-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .auth-prompt-card h3 {
+        margin-top: 0;
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 24px;
+    }
+
+    .auth-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .btn {
+        padding: 14px;
+        border-radius: 14px;
+        font-weight: 600;
+        font-size: 15px;
+        text-decoration: none;
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+
+    .btn-login {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+    }
+
+    .btn-login:hover {
+        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.25);
+        opacity: 0.95;
+    }
+
+    .btn-register {
+        background-color: transparent;
+        color: var(--primary-blue);
+        border: 2px solid var(--primary-blue);
+    }
+
+    .btn-register:hover {
+        background-color: var(--light-blue-bg);
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+        width: 100%;
+        max-width: 950px;
+        margin-top: 15px;
+    }
+
+    .dash-card {
+        background: var(--card-white);
+        border: 1px solid var(--border-subtle);
+        border-radius: 24px;
+        padding: 35px 24px;
+        text-align: center;
+        text-decoration: none;
+        color: inherit;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.01);
+        transition: all 0.25s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .dash-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary-blue);
+        box-shadow: 0 15px 30px rgba(37, 99, 235, 0.08);
+    }
+
+    .icon-box {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        background-color: var(--light-blue-bg);
+        color: var(--primary-blue);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        margin-bottom: 22px;
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.05);
+    }
+
+    .dash-card h3 {
+        margin: 0 0 12px 0;
+        font-size: 18px;
+        color: var(--text-main);
+        font-weight: 700;
+    }
+
+    .dash-card p {
+        margin: 0;
+        font-size: 14px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+
+    @media (max-width: 800px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+            gap: 18px;
+        }
+    }
+</style>
+
+<div class="home-container">
+    
+    <div class="brand-header">
+        <div class="logo-placeholder">
+            <img src="{% static 'img/logo.png' %}" alt="unimap">
+        </div>
+        <h1>UNIMAP</h1>
+        <p>Your unified hub for seamless campus navigation, profile records management, and real-time communication.</p>
+    </div>
+
+    <!-- SECTION 1: AUTH BOXES - ALWAYS SHOW -->
+    <h2 class="section-title">Get Started</h2>
+    <div class="auth-prompt-card">
+        <h3>Login or Create Account</h3>
+        <div class="auth-buttons">
+            <a href="{% url 'login' %}" class="btn btn-login">Log In to Your Account</a>
+            <a href="{% url 'register' %}" class="btn btn-register">Create New Account</a>
+        </div>
+    </div>
+
+    <!-- SECTION 2: DASHBOARD BOXES - ALWAYS SHOW -->
+    <h2 class="section-title">Explore Campus</h2>
+    <div class="dashboard-grid">
+        
+        <a href="{% url 'map' %}" class="dash-card">
+            <div class="icon-box">📍</div>
+            <h3>Campus Map</h3>
+            <p>Seamlessly locate classrooms, faculty layouts, and discover optimal campus routes.</p>
+        </a>
+
+        <!-- Placeholder - change to {% url 'profile' %} when you create it -->
+        <a href="#" class="dash-card">
+            <div class="icon-box">👤</div>
+            <h3>My Profile</h3>
+            <p>Manage your university department information and academic details.</p>
+        </a>
+
+        <!-- Placeholder - change to {% url 'feedback' %} when you create it -->
+        <a href="#" class="dash-card">
+            <div class="icon-box">💬</div>
+            <h3>Feedback System</h3>
+            <p>Easily submit inquiry logs, file requests, and check ticket status.</p>
+        </a>
+        
+    </div>
+</div>
+{% endblock %}

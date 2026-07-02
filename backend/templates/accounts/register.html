@@ -268,7 +268,7 @@
 
 <!-- FORM -->
 <div class="form">
-  <form method="POST" action="">
+  <form method="POST" action="{% url 'register_page' %}">
     {% csrf_token %} 
 
     {% if messages %}
