@@ -30,7 +30,7 @@ ORS_KEY = config("ORS_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
 
 # Hosts allowed to serve the app
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'Uba-navigator.onrender.com']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1','uba-navigator.onrender.com', 'https://uba-navigator.onrender.com']
 
 # MEDIA (User uploads)
 MEDIA_URL = '/media/'
