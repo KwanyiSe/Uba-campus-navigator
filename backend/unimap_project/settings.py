@@ -30,7 +30,7 @@ ORS_KEY = config("ORS_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
 
 # Hosts allowed to serve the app
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'Uba-navigator.onrender.com']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1','uba-navigator.onrender.com', 'https://uba-navigator.onrender.com']
 
 # MEDIA (User uploads)
 MEDIA_URL = '/media/'
@@ -40,7 +40,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 INSTALLED_APPS = [
     # Third-party apps
     'rest_framework',
-    'cloudinary',
+    'corsheaders',
+    'cloudinary', #currently not working 
     'cloudinary_storage',
     
     # Your apps
@@ -48,6 +49,7 @@ INSTALLED_APPS = [
     
     #new apps still in development
     'accounts.apps.AccountsConfig',
+    'feedback.apps.FeedbackConfig',
     # 'academic.apps.AcademicConfig',
     # 'attendance.apps.AttendanceConfig',
     # 'associate.apps.AssociateConfig',

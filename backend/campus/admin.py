@@ -80,14 +80,14 @@ def admin_index(request):
         university = request.user.campus_admin.university
 
         total_visitors = DailyStats.objects.filter(
-            building__university=university
+            university=university
         ).aggregate(
             total=models.Sum("visitors")
         )["total"] or 0
 
         visitors_today = DailyStats.objects.filter(
-            date=today,
-            building__university=university
+            university=university,
+            date=today
         ).aggregate(
             total=models.Sum("visitors")
         )["total"] or 0
@@ -136,17 +136,24 @@ class BuildingAdmin(admin.ModelAdmin):
 # ---------------------------
 @admin.register(DailyStats, site=campus_admin_site)
 class DailyStatsAdmin(admin.ModelAdmin):
-    """Filter stats per university via building."""
-    list_display = ("date", "visitors")
+
+    list_display = (
+        "university",
+        "date",
+        "visitors",
+    )
+
     ordering = ("-date",)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
+
         if request.user.is_superuser:
             return qs
-        # Filter by user's university through building
-        return qs.filter(building__university=request.user.campus_admin.university)
 
+        return qs.filter(
+            university=request.user.campus_admin.university
+        )
 
 # ---------------------------
 # Admin for SiteVisit
@@ -154,11 +161,11 @@ class DailyStatsAdmin(admin.ModelAdmin):
 @admin.register(SiteVisit, site=campus_admin_site)
 class SiteVisitAdmin(admin.ModelAdmin):
     """Filter site visits per university via building."""
-    list_display = ("session_key", "first_visit", "last_visit")
+    list_display = ("session_key","university","first_visit","last_visit",)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_superuser:
             return qs
         # Filter by user's university through building
-        return qs.filter(building__university=request.user.campus_admin.university)
+        return qs.filter(university=request.user.campus_admin.university)
