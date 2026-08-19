@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unimap</title>
+  <link rel="stylesheet" href="{% static 'css/shared.css' %}">
+  <link rel="stylesheet" href="{% static 'css/unimap.css' %}">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <div class="logo">Unimap</div>
+      
+      <!-- Removed all nav links. Clean header now -->
+      <ul class="nav-links" id="navLinks"></ul>
+      
+      <button class="hamburger" onclick="toggleNav()">☰</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <script>
+    function toggleNav() {
+      document.getElementById('navLinks').classList.toggle('show');
+    }
+  </script>
+</body>
+</html>

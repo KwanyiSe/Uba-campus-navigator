@@ -1,3 +1,6 @@
+from django.shortcuts import render, redirect
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import login
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -162,3 +165,20 @@ class ProfileUpdateView(APIView):
 
             "matric_number": profile.matric_number
         })
+    
+def home(request):
+    return render(request, 'home.html')  # Developer 2's home page
+def map_view(request):
+    return render(request, 'map.html')
+def register_view(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('map')  # ← sends to map after signup
+    else:
+        form = UserCreationForm()
+    return render(request, 'register.html', {'form': form})
+def feedback_view(request):
+    return render(request, 'feedback.html')

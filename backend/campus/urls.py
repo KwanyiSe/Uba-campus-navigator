@@ -1,4 +1,5 @@
 from django.urls import path
+from . import views
 from .views import BuildingList, get_route, campus_map
 
 
@@ -10,4 +11,10 @@ urlpatterns = [
     #api's
     path('api/buildings/', BuildingList.as_view(), name='building-list'),
     path('api/route/', get_route, name='get-route'),
+    
+    path(
+        'logout/', 
+        views.logout_view,
+        name='logout'
+    ),
 ]

@@ -54,13 +54,14 @@ INSTALLED_APPS = [
     # 'attendance.apps.AttendanceConfig',
     # 'associate.apps.AssociateConfig',
         
-    # Default Django apps
+    # Default Django appsjj
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'users',
 ]
 
 # MIDDLEWARE
@@ -175,3 +176,5 @@ CLOUDINARY_STORAGE = {
     'API_KEY': config('CLOUDINARY_API_KEY'),
     'API_SECRET': config('CLOUDINARY_API_SECRET'),
 }
+LOGIN_REDIRECT_URL ='map'
+LOGOUT_REDIRECT_URL ='home'
