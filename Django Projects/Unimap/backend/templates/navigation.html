@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% block title %}UNIMAP — Navigation{% endblock %}
+{% block content %}
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><a class="icon-btn" href="{% url 'campus-map' %}">{% include "partials/icon.html" with name="back" %}</a><div><div class="eyebrow">Navigate to</div><h1 style="font-size:22px;margin:0">PBA 3</h1></div></div>
+<div class="card" style="height:430px;position:relative;overflow:hidden;background:linear-gradient(145deg,#10263a,#07111f)">
+  <div style="position:absolute;inset:0;opacity:.28;background-image:linear-gradient(rgba(255,255,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px);background-size:42px 42px;transform:rotate(-8deg) scale(1.2)"></div>
+  <div style="position:absolute;left:25%;top:64%;width:52%;height:4px;background:#1677ff;transform:rotate(-24deg);box-shadow:0 0 16px rgba(22,119,255,.7)"></div>
+  <div style="position:absolute;left:22%;top:66%;width:14px;height:14px;background:#fff;border:3px solid #1677ff;border-radius:50%"></div>
+  <div style="position:absolute;right:21%;top:34%;width:14px;height:14px;background:#1677ff;border:3px solid #fff;border-radius:50%"></div>
+  <div style="position:absolute;left:18px;top:18px;right:18px;padding:15px;background:rgba(10,21,35,.92);border:1px solid var(--border);border-radius:14px;display:flex;gap:12px;align-items:center"><span style="font-size:25px">↑</span><div><b>350 m</b><div class="muted" style="font-size:11px">Turn left onto Main Road</div></div></div>
+</div>
+<div class="grid grid-3" style="margin-top:12px"><div class="card" style="padding:12px;text-align:center;font-size:12px">5 min</div><div class="card" style="padding:12px;text-align:center;font-size:12px">350 m</div><div class="card" style="padding:12px;text-align:center;font-size:12px">Walk</div></div>
+<div class="card" style="padding:18px;margin-top:12px"><h2 style="margin-bottom:3px">PBA 3</h2><p class="muted" style="font-size:12px">Engineering Building · Floor 1</p><button class="btn btn-primary" style="width:100%;margin-top:10px">End Navigation</button></div>
+{% endblock %}

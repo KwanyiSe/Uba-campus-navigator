@@ -1,0 +1,60 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07111f">
+  <title>{% block title %}UNIMAP{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/shared.css' %}">
+  <link rel="stylesheet" href="{% static 'css/unimap.css' %}">
+  <link rel="stylesheet" href="{% static 'css/accounts.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+<div class="page-shell">
+  <header class="app-header">
+    <a class="brand" href="{% url 'campus-map' %}">
+      <img src="{% static 'img/logo.png' %}" alt="UNIMAP">
+      <span>UNIMAP</span>
+    </a>
+    <div class="header-actions">
+      <a class="icon-btn" href="{% url 'menu' %}" aria-label="Open menu">{% include "partials/icon.html" with name="menu" size=19 %}</a>
+      <a class="avatar" href="{% url 'profile' %}">
+        {% if user.is_authenticated and user.profile.profile_picture %}
+          <img src="{{ user.profile.profile_picture.url }}" alt="Profile">
+        {% elif user.is_authenticated and user.profile %}
+          {{ user.profile.initials }}
+        {% else %}
+          {{ user.username|slice:":2"|upper }}
+        {% endif %}
+      </a>
+    </div>
+  </header>
+  <main class="container content">
+    {% if messages %}
+      {% for message in messages %}<div class="message">{{ message }}</div>{% endfor %}
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+
+<nav class="bottom-nav" aria-label="Main navigation">
+  <a class="nav-item {% if request.resolver_match.url_name == 'campus-map' %}active{% endif %}" href="{% url 'campus-map' %}">
+    {% include "partials/icon.html" with name="map" size=20 %}<span>Map</span>
+  </a>
+  <a class="nav-item {% if request.resolver_match.url_name == 'classes' %}active{% endif %}" href="{% url 'classes' %}">
+    {% include "partials/icon.html" with name="classes" size=20 %}<span>Classes</span>
+  </a>
+  <a class="nav-item {% if request.resolver_match.url_name == 'halls' %}active{% endif %}" href="{% url 'halls' %}">
+    {% include "partials/icon.html" with name="halls" size=20 %}<span>Halls</span>
+  </a>
+  <a class="nav-item {% if request.resolver_match.url_name == 'campus-now' %}active{% endif %}" href="{% url 'campus-now' %}">
+    {% include "partials/icon.html" with name="news" size=20 %}<span>News</span>
+  </a>
+  <a class="nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" href="{% url 'profile' %}">
+    {% include "partials/icon.html" with name="profile" size=20 %}<span>Profile</span>
+  </a>
+</nav>
+</body>
+</html>
