@@ -1,0 +1,18 @@
+# Environment ignore secrets
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Django
+/staticfiles/
+/media/
+
+# IDE
+.vscode/
+.idea/
+
+#helper
+createuser.py
