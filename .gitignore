@@ -16,3 +16,9 @@ __pycache__/
 
 #helper
 createuser.py
+
+
+# Local SQLite database (do not commit)
+backend/db.sqlite3
+*.sqlite3
+db.sqlite3

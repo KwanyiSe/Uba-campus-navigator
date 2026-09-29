@@ -31,10 +31,44 @@
 
 
 <style>
+/* ============================================
+   THEME TOKENS (Dark = default)
+   ============================================ */
+:root {
+  --bg-color: #071022;
+  --surface-color: #0b1220;
+  --surface-elevated: #111827;
+  --text-primary: #e6eef8;
+  --text-muted: #94a3b8;
+  --border-color: #1e293b;
+  --primary-blue: #3b82f6;
+  --shadow-strong: 0 6px 18px rgba(2,6,23,0.6);
+  --shadow-soft: 0 10px 26px rgba(2,6,23,0.32);
+  --search-bg: #ffffff;
+  --search-text: #000000;
+}
+
+[data-theme="light"] {
+  --bg-color: #f1f5f9;
+  --surface-color: #ffffff;
+  --surface-elevated: #f8fafc;
+  --text-primary: #0f172a;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
+  --primary-blue: #2563eb;
+  --shadow-strong: 0 6px 18px rgba(2,6,23,0.15);
+  --shadow-soft: 0 10px 26px rgba(2,6,23,0.1);
+  --search-bg: #ffffff;
+  --search-text: #0f172a;
+}
+
 html,body{
   height:100%;margin:0;
   font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;
-  background:#071022;color:#e6eef8;overflow:hidden;
+  background:var(--bg-color);
+  color:var(--text-primary);
+  overflow:hidden;
+  transition: background-color 0.3s, color 0.3s;
 }
 
 /* ---------------- SPLASH ---------------- */
@@ -73,14 +107,15 @@ html,body{
   right: 0;
   height: 68px;             
   padding-top: 8px;          
-  background: #0b1220;
+  background: var(--surface-color);
   z-index: 10010;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 18px rgba(2,6,23,0.6);
+  box-shadow: var(--shadow-strong);
   font-size: 18px;        
   font-weight: 700;
+  transition: background-color 0.3s;
 }
 #themeBtn {
   position: absolute;
@@ -89,14 +124,33 @@ html,body{
   width: 40px;         
   height: 40px;
   border-radius: 10px; 
-  background: #111827;
+  background: var(--surface-elevated);
   border: none;
-  color: white;
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.15s ease;
+}
+
+/* NEW: UI THEME TOGGLE BUTTON */
+#uiThemeBtn {
+  position: absolute;
+  left: 60px;         /* sits right of the existing themeBtn */
+  top: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--surface-elevated);
+  border: none;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 18px;
 }
 
 /* ---------------- SEARCH ---------------- */
@@ -119,12 +173,12 @@ html,body{
 #searchBox {
   position: relative;
   flex: 1;
-  background: #fff;
+  background: var(--search-bg);
   border-radius: 14px;
   padding: 6px 10px;
   display: flex;
   align-items: center;
-  box-shadow: 0 10px 26px rgba(2,6,23,0.32);
+  box-shadow: var(--shadow-soft);
 }
 
 /* ---- Fix mobile search zomm shift ---- */
@@ -160,8 +214,8 @@ html, body {
   outline: none;
   font-size: 15px;
   padding: 10px 8px;
-  background: white;
-  color: black;
+  background: var(--search-bg);
+  color: var(--search-text);
 }
 
 /* Darker clear X icon */
@@ -204,8 +258,8 @@ html, body {
 
 /* Search button (desktop only) */
 #searchBtn {
-  background: #1f2937;
-  color: #fff;
+  background: var(--surface-elevated);
+  color: var(--text-primary);
   border: none;
   padding: 10px 14px;
   border-radius: 10px;
@@ -242,10 +296,10 @@ html, body {
 
 /* FLOAT BUTTONS */
 .floatBtn{
-  position:fixed;right:12px;z-index:10009;border:none;color:#fff;
+  position:fixed;right:12px;z-index:10009;border:none;color:var(--text-primary);
   padding:10px 12px;border-radius:10px;font-weight:700;
-  background:#111827; cursor:pointer;
-  box-shadow:0 6px 18px rgba(2,6,23,0.6);
+  background:var(--surface-elevated); cursor:pointer;
+  box-shadow:var(--shadow-strong);
   transition:0.15s;
 }
 
@@ -267,10 +321,10 @@ html, body {
   left:12px;
   right:12px;
   bottom:12px;
-  background:#0f172a;        
+  background:var(--surface-color);        
   padding:12px;              
   border-radius:14px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.5);
+  box-shadow:var(--shadow-strong);
   display:none;              /* hidden until route starts */
   z-index:10020;
 }
@@ -278,7 +332,7 @@ html, body {
 
 #routeSteps{
   margin-top:8px;max-height:180px;overflow:auto;
-  color:#cfe7ff;font-size:13px;
+  color:var(--text-muted);font-size:13px;
 }
 
 /* TOAST */
@@ -290,7 +344,7 @@ html, body {
 
 /* POPUP BUTTONS */
 .popup-btn{
-  width:100%;background:#1f2937;color:#fff;border:none;
+  width:100%;background:var(--surface-elevated);color:var(--text-primary);border:none;
   padding:8px;margin-top:6px;border-radius:8px;font-size:14px;
   cursor:pointer;transition:0.15s;
 }
@@ -311,13 +365,13 @@ button:active, .popup-btn:active {
   z-index:20000;
 }
 .about-content{
-  background:#111827;color:white;
+  background:var(--surface-elevated);color:var(--text-primary);
   width:85%;max-width:340px;padding:20px;
   border-radius:12px;text-align:center;
   box-shadow:0 8px 24px rgba(0,0,0,0.5);
 }
 .about-content h2{ margin-top:0; }
-.about-content a{ color:#3b82f6;font-weight:600; }
+.about-content a{ color:var(--primary-blue);font-weight:600; }
 
 /* USER LOCATION MARKER*/
 .user-location {
@@ -381,7 +435,8 @@ button:active, .popup-btn:active {
 
 <!-- HEADER -->
 <div id="headerBar">
-  <button id="themeBtn"></button>
+  <button id="themeBtn" title="Toggle map style"></button>
+  <button id="uiThemeBtn" title="Toggle light/dark UI">🌙</button>
   <div id="titleText">{{ university.name }}</div>
 </div>
 
@@ -411,7 +466,7 @@ button:active, .popup-btn:active {
 <!-- IPhone user guide-->
 <div id="iosInstall"
   style="display:none; text-align:center; padding:10px; position:fixed;
-         bottom:70px; left:10px; right:10px; background:#0f172a;
+         bottom:70px; left:10px; right:10px; background:var(--surface-color);
          border-radius:10px; z-index:10030;">
   <p>
     📲 To install on iPhone:<br>
@@ -532,7 +587,7 @@ map.on("popupopen", e => {
 
 
 
-/* THEME SWITCH */
+/* THEME SWITCH (existing map tile switcher) */
 const themeBtn = document.getElementById("themeBtn");
 function applyTheme(){
   themeBtn.innerHTML = currentBase === "satellite"
@@ -548,6 +603,26 @@ themeBtn.onclick = () => {
   applyTheme();
 };
 applyTheme();
+
+/* ============================================
+   NEW: UI LIGHT/DARK MODE TOGGLE
+   Does not affect map tiles.
+   ============================================ */
+const uiThemeBtn = document.getElementById("uiThemeBtn");
+const savedUiTheme = localStorage.getItem("ui-theme") || "dark";
+
+function applyUiTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  uiThemeBtn.textContent = theme === "dark" ? "🌙" : "☀️";
+  localStorage.setItem("ui-theme", theme);
+}
+
+applyUiTheme(savedUiTheme);
+
+uiThemeBtn.onclick = () => {
+  const current = document.documentElement.getAttribute("data-theme") || "dark";
+  applyUiTheme(current === "dark" ? "light" : "dark");
+};
 
 /* BOUNDARY LOCK */
 // getting our campus boundry from database backend
