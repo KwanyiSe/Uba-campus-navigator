@@ -1,0 +1,10 @@
+{% load static %}
+{% extends "base.html" %}{% block title %}UNIMAP — PBA 3{% endblock %}
+{% block content %}
+<div class="card" style="overflow:hidden">
+<div class="place-photo" style="background-image:url('{% static 'img/classroom.jpg' %}')" aria-label="Classroom photo"></div>
+<div style="padding:22px"><div class="eyebrow">Engineering Building</div><h1 style="margin-top:6px">PBA 3</h1><div style="display:flex;gap:7px;flex-wrap:wrap"><span class="badge badge-blue">Floor 1</span><span class="badge badge-blue">Capacity 120</span></div>
+<div class="card" style="padding:15px;margin-top:18px;box-shadow:none"><div class="muted" style="font-size:11px">Status</div><div style="display:flex;justify-content:space-between;margin-top:7px"><span style="color:#ff7373"><span class="dot"></span> In Use</span><span>CSC 308<br><small class="muted">10:00 AM – 12:00 PM</small></span></div></div>
+<div class="grid grid-2" style="margin-top:12px"><a class="btn btn-primary" href="{% url 'navigation' %}">{% include "partials/icon.html" with name="route" size=17 %} Directions</a><a class="btn btn-secondary" href="{% url 'campus-map' %}">{% include "partials/icon.html" with name="map" size=17 %} View on Map</a></div>
+</div></div>
+{% endblock %}

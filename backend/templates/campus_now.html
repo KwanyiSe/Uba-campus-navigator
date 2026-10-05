@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}News · UNIMAP{% endblock %}
+
+{% block content %}
+
+<div class="news-page">
+
+    <!-- Header -->
+    <div class="news-header">
+        <div>
+            <div class="news-kicker">UNIVERSITY COMMUNITY</div>
+            <h1>News</h1>
+            <p>Stay updated with what's happening around your university.</p>
+        </div>
+
+        <button class="news-filter-button" type="button" onclick="toggleFilters()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="4" y1="6" x2="20" y2="6"/>
+                <line x1="7" y1="12" x2="17" y2="12"/>
+                <line x1="10" y1="18" x2="14" y2="18"/>
+            </svg>
+            <span>Filter</span>
+        </button>
+    </div>
+
+    <!-- Main category tabs -->
+    <div class="news-tabs">
+        <button class="news-tab active" onclick="setTab(this); load('all')">
+            All
+        </button>
+
+        <button class="news-tab" onclick="setTab(this); load('study_group')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <span>Study Groups</span>
+        </button>
+
+        <button class="news-tab" onclick="setTab(this); load('campus_news')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/>
+                <path d="M18 14h-8"/>
+                <path d="M15 18h-5"/>
+                <path d="M10 6h8v4h-8V6Z"/>
+            </svg>
+            <span>Campus News</span>
+        </button>
+    </div>
+
+    <!-- Filters -->
+    <div id="newsFilters" class="news-filters">
+
+        <button onclick="setScope(this); load('all','all')" class="scope-button active">
+            All
+        </button>
+
+        <button onclick="setScope(this); load('all','school')" class="scope-button">
+            My School
+        </button>
+
+        <button onclick="setScope(this); load('all','department')" class="scope-button">
+            My Department
+        </button>
+
+        <button onclick="setScope(this); load('all','option')" class="scope-button">
+            My Option
+        </button>
+
+        <button onclick="setScope(this); load('all','level')" class="scope-button">
+            My Level
+        </button>
+
+    </div>
+
+    {% if profile %}
+    <!-- Composer trigger: the feed stays visible by default. -->
+    <button class="news-compose-trigger" type="button" id="openNewsComposer">
+        <span class="news-compose-avatar">
+            {% if profile.profile_picture %}
+                <img src="{{ profile.profile_picture.url }}" alt="">
+            {% else %}
+                {{ profile.initials }}
+            {% endif %}
+        </span>
+        <span class="news-compose-prompt">Share what you're doing...</span>
+        <span class="news-compose-icon" aria-hidden="true">+</span>
+    </button>
+
+    <!-- Composer modal -->
+    <div class="news-modal" id="newsComposer" hidden>
+        <div class="news-modal-backdrop" data-close-news-modal></div>
+        <section class="news-modal-panel" role="dialog" aria-modal="true" aria-labelledby="newsComposerTitle">
+            <div class="news-modal-header">
+                <div>
+                    <div class="news-modal-kicker">UNIVERSITY COMMUNITY</div>
+                    <h2 id="newsComposerTitle">Create a post</h2>
+                </div>
+                <button type="button" class="news-modal-close" id="closeNewsComposer" aria-label="Close">×</button>
+            </div>
+
+            <div class="post-permission">
+                <span class="permission-dot"></span>
+                {% if profile.role == "student" %}
+                    You can create Study Groups.
+                {% else %}
+                    You can create Study Groups and publish Campus News.
+                {% endif %}
+            </div>
+
+            <form id="newsForm" class="news-form">
+                <div class="news-input-group">
+                    <label for="newsTitle">Title</label>
+                    <input id="newsTitle" name="title" type="text" placeholder="Give your post a title" required>
+                </div>
+
+                <div class="news-input-group">
+                    <label for="newsBody">What's happening?</label>
+                    <textarea id="newsBody" name="body" placeholder="Write your update, announcement or study group details..." required></textarea>
+                </div>
+
+                <div class="news-form-row">
+                    <div class="news-input-group">
+                        <label for="postType">Post type</label>
+                        <select id="postType" name="post_type">
+                            <option value="study_group">Study Group</option>
+                            {% if profile.role != "student" %}
+                                <option value="campus_news">Campus News</option>
+                            {% endif %}
+                        </select>
+                    </div>
+
+                    <div class="news-input-group">
+                        <label for="postAudience">Audience</label>
+                        <select id="postAudience" name="audience">
+                            <option value="university">Whole University</option>
+                            <option value="school">School</option>
+                            <option value="department">Department</option>
+                            <option value="option">Option</option>
+                            <option value="level">Level</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="attachment-box">
+                    <label for="newsAttachments" class="attachment-label">
+                        <span class="attachment-icon">
+                            {% include "partials/icon.html" with name="paperclip" size=18 %}
+                        </span>
+                        <span>
+                            <strong>Add photos or documents</strong>
+                            <small>Images and documents · Multiple files allowed</small>
+                        </span>
+                    </label>
+                    <input id="newsAttachments" name="attachments" type="file" multiple hidden>
+                    <div id="attachmentList" class="attachment-list"></div>
+                </div>
+
+                <button class="publish-news-button" type="submit">
+                    <span>Publish</span>
+                    {% include "partials/icon.html" with name="arrow-right" size=16 %}
+                </button>
+            </form>
+        </section>
+    </div>
+    {% endif %}
+
+    <!-- Feed heading -->
+    <div class="feed-heading">
+
+        <div>
+            <h2>Latest updates</h2>
+            <p>What's happening in your campus community</p>
+        </div>
+
+        <button
+            type="button"
+            class="refresh-news"
+            onclick="load()"
+            title="Refresh"
+            aria-label="Refresh feed"
+        >
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="23 4 23 10 17 10"/>
+                <polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/>
+                <path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+        </button>
+
+    </div>
+
+    <!-- Feed -->
+    <div id="news" class="news-feed"></div>
+
+</div>
+
+<script src="{% static 'js/news.js' %}"></script>
+{% endblock %}

@@ -175,3 +175,6 @@ CLOUDINARY_STORAGE = {
     'API_KEY': config('CLOUDINARY_API_KEY'),
     'API_SECRET': config('CLOUDINARY_API_SECRET'),
 }
+
+#Maximum GPS uncertainty accepted for attendance verfication: should be adjusted after real-world testing.
+MAX_GPS_ACCURACY = 100.0
