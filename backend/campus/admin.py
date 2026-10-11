@@ -5,6 +5,7 @@ from django.db import models
 
 # Import models
 from .models import Building, SiteVisit, DailyStats, University, CampusAdminUser
+from .models import BuildingGeofence, GeofenceLog
 
 # Import default auth models
 from django.contrib.auth.models import User, Group
@@ -32,7 +33,8 @@ class CampusAdminSite(AdminSite):
 
 # Instantiate custom admin site
 campus_admin_site = CampusAdminSite(name="campus_admin")
-
+campus_admin_site.register(BuildingGeofence)
+campus_admin_site.register(GeofenceLog)
 
 # ---------------------------
 # Register default auth models

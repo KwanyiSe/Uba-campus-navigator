@@ -76,8 +76,11 @@ class ClassSession(models.Model):
     class Meta:
         ordering = ["session_date", "start_time"]
 
+    #def __str__(self):
+        #return f"{self.course.code} — {self.option.name} L{self.level}"
     def __str__(self):
-        return f"{self.course.code} — {self.option.name} L{self.level}"
+        option_name = self.option.name if self.option else "General"
+        return f"{self.course.code} — {self.option} [{self.level}]"    
 
 
 class Enrollment(models.Model):

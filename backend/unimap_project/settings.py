@@ -50,9 +50,9 @@ INSTALLED_APPS = [
     #new apps still in development
     'accounts.apps.AccountsConfig',
     'feedback.apps.FeedbackConfig',
-    # 'academic.apps.AcademicConfig',
-    # 'attendance.apps.AttendanceConfig',
-    # 'associate.apps.AssociateConfig',
+    'academic.apps.AcademicConfig',
+    #'attendance.apps.AttendanceConfig',
+    #'associate.apps.AssociateConfig',
         
     # Default Django apps
     'django.contrib.admin',
@@ -178,3 +178,10 @@ CLOUDINARY_STORAGE = {
 
 #Maximum GPS uncertainty accepted for attendance verfication: should be adjusted after real-world testing.
 MAX_GPS_ACCURACY = 100.0
+
+SUPABASE_S3_ENDPOINT=config("SUPABASE_S3_ENDPOINT")
+SUPABASE_S3_ACCESS_KEY_ID=config("SUPABASE_S3_ACCESS_KEY_ID")
+SUPABASE_S3_SECRET_ACCESS_KEY=config("SUPABASE_S3_SECRET_ACCESS_KEY")
+SUPABASE_S3_REGION=config("SUPABASE_S3_REGION")
+SUPABASE_S3_NEWS_BUCKET=config("SUPABASE_S3_NEWS_BUCKET")
+SUPABASE_S3_PROFILES_BUCKET=config("SUPABASE_S3_PROFILES_BUCKET")

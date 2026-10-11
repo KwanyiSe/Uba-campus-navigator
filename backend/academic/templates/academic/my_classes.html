@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}My Classes{% endblock %}
+{% block content %}
+<div class="card" style="padding:20px;">
+  <h2>My Classes Today</h2>
+  <div id="sessionList">Loading...</div>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const res = await fetch("/api/academic/sessions/");
+  const sessions = await res.json();
+  const list = document.getElementById("sessionList");
+  if (!sessions.length) {
+    list.innerHTML = "<p>No classes scheduled today.</p>";
+    return;
+  }
+  list.innerHTML = sessions.map(s => `
+    <a href="/academic/class-detail/${s.id}/" class="card" style="display:block;padding:14px;margin-top:10px;text-decoration:none;">
+      <strong>${s.course_code || s.course} — ${s.building_name || ''}</strong><br>
+      <span>${s.session_date} · ${s.start_time}–${s.end_time} · ${s.status}</span>
+    </a>
+  `).join("");
+});
+</script>
+{% endblock %}

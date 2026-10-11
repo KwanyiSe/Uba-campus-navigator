@@ -43,7 +43,7 @@
   <a class="nav-item {% if request.resolver_match.url_name == 'campus-map' %}active{% endif %}" href="{% url 'campus-map' %}">
     {% include "partials/icon.html" with name="map" size=20 %}<span>Map</span>
   </a>
-  <a class="nav-item {% if request.resolver_match.url_name == 'classes' %}active{% endif %}" href="{% url 'classes' %}">
+  <a class="nav-item {% if request.resolver_match.url_name == 'my-classes' %}active{% endif %}" href="{% url 'b4:my-classes' %}">
     {% include "partials/icon.html" with name="classes" size=20 %}<span>Classes</span>
   </a>
   <a class="nav-item {% if request.resolver_match.url_name == 'halls' %}active{% endif %}" href="{% url 'halls' %}">
