@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}UNIMAP — About{% endblock %}
+{% block content %}
+<div class="about-screen">
+  <div class="section-head"><div><div class="eyebrow">About</div><h1>About UNIMAP</h1><p class="muted about-intro">A smart campus companion for finding places, navigating campus, managing classes and staying connected.</p></div><a class="icon-btn" href="{% url 'menu' %}" aria-label="Back to menu">{% include "partials/icon.html" with name="back" size=19 %}</a></div>
+  <section class="card about-brand-card"><img src="{% static 'img/logo.png' %}" alt="UNIMAP logo"><div><span class="badge badge-blue">UNIMAP</span><h2>Smart Campus Navigation</h2><p class="muted">Navigate. Connect. Succeed.</p></div></section>
+  <div class="section-head"><h2>What UNIMAP does</h2></div>
+  <section class="grid grid-2 about-feature-grid">
+    <div class="card about-feature">{% include "partials/icon.html" with name="map" size=22 %}<h3>Campus Map</h3><p class="muted">Find campus buildings, halls, labs and hostels on an interactive map.</p></div>
+    <div class="card about-feature">{% include "partials/icon.html" with name="route" size=22 %}<h3>Navigation</h3><p class="muted">Use your location and walking routes to reach campus destinations.</p></div>
+    <div class="card about-feature">{% include "partials/icon.html" with name="classes" size=22 %}<h3>Classes & Attendance</h3><p class="muted">Keep classes, schedules and attendance connected to your campus experience.</p></div>
+    <div class="card about-feature">{% include "partials/icon.html" with name="halls" size=22 %}<h3>Free Halls</h3><p class="muted">Discover available study and learning spaces around campus.</p></div>
+  </section>
+  <div class="section-head"><h2>UNIMAP team</h2></div>
+  <section class="grid grid-2">
+    <div class="card team-card"><div class="team-person"><div class="team-avatar">KS</div><div><h3>Kwanyi Sedrick Bodeh</h3><p class="muted">Founder &amp; Lead Developer</p></div></div></div>
+    <div class="card team-card"><div class="team-person"><div class="team-avatar">+</div><div><h3>Project contributors</h3><p class="muted">Frontend, backend, mapping and campus contributors</p></div></div></div>
+  </section>
+  <p class="muted team-note">UNIMAP is being developed as a campus navigation and management platform. More members and contributors can be listed here as the project team is finalized.</p>
+  <div class="section-head"><h2>Version</h2></div><section class="card about-version"><span>UNIMAP</span><span class="muted">1.0.1</span></section>
+</div>
+{% endblock %}

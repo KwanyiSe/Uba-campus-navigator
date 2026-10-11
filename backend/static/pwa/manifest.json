@@ -1,22 +1,15 @@
 {
-  "name": "University of Bamenda Campus Map",
-  "short_name": "UBa Map",
-  "description": "Campus navigation system for the University of Bamenda",
-  "start_url": "/",
+  "name": "UNIMAP — Smart Campus Navigation",
+  "short_name": "UNIMAP",
+  "description": "Smart campus navigation and campus services.",
+  "start_url": "/map/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#0b1220",
-  "theme_color": "#0b1220",
+  "background_color": "#07111d",
+  "theme_color": "#07111d",
   "orientation": "portrait",
   "icons": [
-    {
-      "src": "/static/pwa/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/static/pwa/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+    {"src": "/static/pwa/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "/static/pwa/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
   ]
 }

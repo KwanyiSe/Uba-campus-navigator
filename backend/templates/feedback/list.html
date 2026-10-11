@@ -1,0 +1,34 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>My Feedback</h2>
+
+{% if feedback_list %}
+<table border="1" cellpadding="10">
+    <tr>
+        <th>Title</th>
+        <th>Category</th>
+        <th>Date</th>
+        <th>Status</th>
+    </tr>
+
+    {% for item in feedback_list %}
+    <tr>
+        <td>{{ item.title }}</td>
+        <td>{{ item.category }}</td>
+        <td>{{ item.date_submitted|date:"d/m/Y" }}</td>
+        <td>
+            <span class="badge badge-{{ item.status|lower }}">
+                {{ item.status }}
+            </span>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>You haven't submitted any feedback yet.</p>
+{% endif %}
+
+{% endblock %}

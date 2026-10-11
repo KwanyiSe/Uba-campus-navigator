@@ -1,0 +1,23 @@
+from django.db import migrations, models
+import django.db.models.deletion
+
+
+class Migration(migrations.Migration):
+    dependencies=[("academic","0008_use_supabase_news_storage")]
+    operations=[
+        migrations.CreateModel(name="AcademicYear",fields=[("id",models.BigAutoField(auto_created=True,primary_key=True,serialize=False,verbose_name="ID")),("name",models.CharField(max_length=30,unique=True)),("start_date",models.DateField(blank=True,null=True)),("end_date",models.DateField(blank=True,null=True)),("active",models.BooleanField(default=True))]),
+        migrations.CreateModel(name="Semester",fields=[("id",models.BigAutoField(auto_created=True,primary_key=True,serialize=False,verbose_name="ID")),("name",models.CharField(choices=[("semester_1","Semester 1"),("semester_2","Semester 2")],max_length=20)),("start_date",models.DateField(blank=True,null=True)),("end_date",models.DateField(blank=True,null=True)),("active",models.BooleanField(default=True)),("academic_year",models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,related_name="semesters",to="academic.academicyear"))]),
+        migrations.CreateModel(name="FormB",fields=[("id",models.BigAutoField(auto_created=True,primary_key=True,serialize=False,verbose_name="ID")),("level",models.IntegerField()),("title",models.CharField(blank=True,max_length=180)),("file",models.FileField(upload_to="academic/form_b/")),("uploaded_at",models.DateTimeField(auto_now_add=True)),("status",models.CharField(choices=[("draft","Draft"),("published","Published"),("archived","Archived")],default="draft",max_length=12)),("parsed_at",models.DateTimeField(blank=True,null=True)),("academic_year",models.ForeignKey(on_delete=django.db.models.deletion.PROTECT,related_name="form_bs",to="academic.academicyear")),("department",models.ForeignKey(on_delete=django.db.models.deletion.PROTECT,related_name="form_bs",to="accounts.department")),("option",models.ForeignKey(on_delete=django.db.models.deletion.PROTECT,related_name="form_bs",to="accounts.option")),("semester",models.ForeignKey(on_delete=django.db.models.deletion.PROTECT,related_name="form_bs",to="academic.semester")),("university",models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,related_name="form_bs",to="campus.university")),("uploaded_by",models.ForeignKey(null=True,on_delete=django.db.models.deletion.SET_NULL,related_name="uploaded_form_bs",to="auth.user"))]),
+        migrations.CreateModel(name="FormBCourse",fields=[("id",models.BigAutoField(auto_created=True,primary_key=True,serialize=False,verbose_name="ID")),("source_code",models.CharField(max_length=30)),("source_name",models.CharField(max_length=150)),("position",models.PositiveIntegerField(default=0)),("course",models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,related_name="form_b_entries",to="academic.course")),("form_b",models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,related_name="courses",to="academic.formb"))]),
+        migrations.AddField(model_name="classsession",name="form_b",field=models.ForeignKey(blank=True,null=True,on_delete=django.db.models.deletion.SET_NULL,related_name="class_sessions",to="academic.formb")),
+        migrations.AddField(model_name="enrollment",name="form_b",field=models.ForeignKey(blank=True,null=True,on_delete=django.db.models.deletion.SET_NULL,related_name="enrollments",to="academic.formb")),
+        migrations.AddField(model_name="attendancerecord",name="latitude",field=models.FloatField(blank=True,null=True)),
+        migrations.AddField(model_name="attendancerecord",name="longitude",field=models.FloatField(blank=True,null=True)),
+        migrations.AddField(model_name="attendancerecord",name="accuracy",field=models.FloatField(blank=True,null=True)),
+        migrations.AddField(model_name="attendancerecord",name="verified_at",field=models.DateTimeField(blank=True,null=True)),
+        migrations.RemoveConstraint(model_name="enrollment",name="unique_student_course_enrollment"),
+        migrations.AddConstraint(model_name="enrollment",constraint=models.UniqueConstraint(fields=("student","course","form_b"),name="unique_student_course_form_b_enrollment")),
+        migrations.AddConstraint(model_name="semester",constraint=models.UniqueConstraint(fields=("academic_year","name"),name="unique_semester_per_academic_year")),
+        migrations.AddConstraint(model_name="formb",constraint=models.UniqueConstraint(fields=("university","academic_year","semester","department","option","level"),name="unique_form_b_cohort_semester")),
+        migrations.AddConstraint(model_name="formbcourse",constraint=models.UniqueConstraint(fields=("form_b","course"),name="unique_course_per_form_b")),
+    ]

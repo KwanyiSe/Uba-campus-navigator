@@ -1,164 +1,82 @@
-from rest_framework import generics
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth.models import User
+from rest_framework import generics, status
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.authentication import SessionAuthentication
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from campus.models import University
-from .models import School, Department
-from .serializers import (
-    RegisterSerializer,
-    ProfileUpdateSerializer
-)
-
-
+from .models import School, Department, Option, Profile
+from .serializers import RegisterSerializer, ProfileUpdateSerializer
 
 
 class RegisterView(generics.CreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = RegisterSerializer
 
 
 class ProfileView(APIView):
+    authentication_classes = [SessionAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
-
     def get(self, request):
-        profile = request.user.profile
-        
-        return Response({
-            "username": request.user.username,
-
-            "role": profile.role,
-
-            "university": (
-                profile.university.name
-                if profile.university else None
-            ),
-
-            "university_id": (
-                profile.university.id
-                if profile.university else None
-            ),
-
-            "school": (
-                profile.school.name
-                if profile.school else None
-            ),
-
-            "school_id": (
-                profile.school.id
-                if profile.school else None
-            ),
-
-            "department": (
-                profile.department.name
-                if profile.department else None
-            ),
-
-            "department_id": (
-                profile.department.id
-                if profile.department else None
-            ),
-
-            "matric_number": profile.matric_number,
-            "admission_year": profile.admission_year,
-            "level": profile.level
-        })
-     
-        
-## now lets create the apis for fontend to use..
-class UniversityListView(APIView):
-    """ the university list view"""
-
-    def get(self, request):
-
-        universities = University.objects.all()
-        data = [
-            {
-                "id": university.id,
-                "name": university.name,
-                "short_name": university.short_name
-            }
-            for university in universities
-        ]
-        return Response(data)
-
-class SchoolListView(APIView):
-    """school listview"""
-    def get(self, request):
-
-        university_id = request.GET.get("university")
-
-        if not university_id:
-            return Response(
-                {"error": "university parameter is required"},
-                status=400
-            )
-
-        schools = School.objects.filter( university_id=university_id)
-
-        data = [ {"id": school.id,"name": school.name}for school in schools]
-
-        return Response(data)
-    
-    
-class DepartmentListView(APIView):
-
-    def get(self, request):
-
-        school_id = request.GET.get("school")
-
-        if not school_id:
-            return Response(
-                {"error": "school parameter is required"},
-                status=400
-            )
-
-        departments = Department.objects.filter(
-            school_id=school_id
-        )
-
-        data = [
-            {
-                "id": department.id,
-                "name": department.name
-            }
-            for department in departments
-        ]
-        return Response(data)
-    
-    
-class ProfileUpdateView(APIView):
-    permission_classes = [IsAuthenticated]
+        p = getattr(request.user, "profile", None)
+        if p is None:
+            u = University.objects.filter(active=True).first()
+            if not u: return Response({"detail":"No active university is configured."}, status=503)
+            p = Profile.objects.create(user=request.user, university=u)
+        return Response(profile_payload(p))
 
     def patch(self, request):
+        s = ProfileUpdateSerializer(request.user.profile, data=request.data, partial=True)
+        s.is_valid(raise_exception=True); s.save()
+        return Response(profile_payload(request.user.profile))
 
-        profile = request.user.profile
 
-        serializer = ProfileUpdateSerializer(
-            profile,
-            data=request.data,
-            partial=True
-        )
+def profile_payload(p):
+    return {
+        "username": p.user.username, "full_name": p.display_name(), "email": p.user.email,
+        "role": p.role, "profile_picture": p.profile_picture.url if p.profile_picture else None,
+        "university": p.university.name if p.university else None, "university_id": p.university_id,
+        "university_short_name": p.university.short_name if p.university else None,
+        "school": p.school.name if p.school else None, "school_id": p.school_id,
+        "department": p.department.name if p.department else None, "department_id": p.department_id,
+        "option": p.option.name if p.option else None, "option_id": p.option_id,
+        "matric_number": p.matric_number, "admission_year": p.admission_year, "level": p.level,
+    }
 
-        serializer.is_valid(
-            raise_exception=True
-        )
 
-        serializer.save()
+class UniversityListView(APIView):
+    def get(self, request):
+        return Response([{"id":u.id,"name":u.name,"short_name":u.short_name,"logo":u.logo.url if u.logo else None} for u in University.objects.filter(active=True).order_by("name")])
 
-        #returning the reponse with the updated data to aviodd another api call (: kwanyi..
-        return Response({
-            "message": "Profile updated successfully",
 
-            "school": (
-                profile.school.name
-                if profile.school else None
-            ),
+class SchoolListView(APIView):
+    def get(self, request):
+        uid=request.GET.get("university")
+        if not uid: return Response({"error":"university parameter is required"}, status=400)
+        return Response([{"id":s.id,"name":s.name,"logo":s.logo.url if s.logo else None} for s in School.objects.filter(university_id=uid).order_by("name")])
 
-            "department": (
-                profile.department.name
-                if profile.department else None
-            ),
 
-            "level": profile.level,
+class DepartmentListView(APIView):
+    def get(self, request):
+        sid=request.GET.get("school")
+        if not sid: return Response({"error":"school parameter is required"}, status=400)
+        return Response([{"id":d.id,"name":d.name,"logo":d.logo.url if d.logo else None} for d in Department.objects.filter(school_id=sid).order_by("name")])
 
-            "matric_number": profile.matric_number
-        })
+
+class OptionListView(APIView):
+    def get(self, request):
+        did=request.GET.get("department")
+        if not did: return Response({"error":"department parameter is required"}, status=400)
+        return Response([{"id":o.id,"name":o.name,"code":o.code} for o in Option.objects.filter(department_id=did, active=True).order_by("name")])
+
+
+class SchoolOptionListView(APIView):
+    def get(self, request):
+        sid=request.GET.get("school")
+        if not sid: return Response({"error":"school parameter is required"}, status=400)
+        return Response([{"id":o.id,"name":o.name,"code":o.code,"department_id":o.department_id} for o in Option.objects.filter(department__school_id=sid, active=True).order_by("name")])
+
+
+class ProfileUpdateView(ProfileView):
+    pass

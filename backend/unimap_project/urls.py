@@ -1,30 +1,41 @@
 from django.conf import settings
 from django.conf.urls.static import static
-from campus.admin import campus_admin_site
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.urls import path, include
+
+from campus.admin import campus_admin_site
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
 
 urlpatterns = [
-    path('admin/', campus_admin_site.urls),
+    # Custom campus administration site
+    path("admin/", campus_admin_site.urls),
 
-    path('', include("campus.urls")),
+    # Server-rendered frontend pages
+    path("", include("users.urls")),
 
-    # Accounts
-    path('api/auth/', include('accounts.urls')),
+    # Campus map and campus APIs
+    path("", include("campus.urls")),
 
-    # Feedback
-    path('api/feedback/', include('feedback.urls')),    #kwanyi :),,. so tireeeed today :/
+    # Accounts REST API
+    path("api/auth/", include("accounts.urls")),
 
-    # JWT Authentication
-    path('api/token/', TokenObtainPairView.as_view()),
-    path('api/token/refresh/', TokenRefreshView.as_view()),
+    # Feedback REST API
+    path("api/feedback/", include("feedback.urls")),
+
+    # Academic / campus activity APIs
+    path("api/academic/", include("academic.urls")),
+
+    # JWT authentication for API clients / future React frontend
+    path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 ]
 
 if settings.DEBUG:
+    urlpatterns += staticfiles_urlpatterns()
     urlpatterns += static(
         settings.MEDIA_URL,
-        document_root=settings.MEDIA_ROOT
+        document_root=settings.MEDIA_ROOT,
     )

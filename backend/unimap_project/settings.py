@@ -27,10 +27,10 @@ SECRET_KEY = config("SECRET_KEY")
 ORS_KEY = config("ORS_KEY")
 
 # DEBUG mode
-DEBUG = config("DEBUG", default=False, cast=bool)
+DEBUG = True
 
 # Hosts allowed to serve the app
-ALLOWED_HOSTS = ['localhost', '127.0.0.1','uba-navigator.onrender.com', 'https://uba-navigator.onrender.com']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'Uba-navigator.onrender.com']
 
 # MEDIA (User uploads)
 MEDIA_URL = '/media/'
@@ -49,18 +49,20 @@ INSTALLED_APPS = [
     
     #new apps still in development
     'accounts.apps.AccountsConfig',
+    'academic.apps.AcademicConfig',
     'feedback.apps.FeedbackConfig',
     # 'academic.apps.AcademicConfig',
     # 'attendance.apps.AttendanceConfig',
     # 'associate.apps.AssociateConfig',
         
-    # Default Django apps
+    # Default Django appsjj
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'users.apps.UsersConfig',
 ]
 
 # MIDDLEWARE
@@ -80,6 +82,7 @@ MIDDLEWARE = [
 # REST Framework & JWT
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
@@ -168,10 +171,24 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CLOUDINARY MEDIA STORAGE
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
     'API_KEY': config('CLOUDINARY_API_KEY'),
     'API_SECRET': config('CLOUDINARY_API_SECRET'),
 }
+
+
+# Supabase S3 Storage
+SUPABASE_S3_ENDPOINT = config("SUPABASE_S3_ENDPOINT")
+SUPABASE_S3_REGION = config("SUPABASE_S3_REGION")
+SUPABASE_S3_ACCESS_KEY_ID = config("SUPABASE_S3_ACCESS_KEY_ID")
+SUPABASE_S3_SECRET_ACCESS_KEY = config("SUPABASE_S3_SECRET_ACCESS_KEY")
+
+SUPABASE_S3_PROFILES_BUCKET = config("SUPABASE_S3_PROFILES_BUCKET")
+SUPABASE_S3_NEWS_BUCKET = config("SUPABASE_S3_NEWS_BUCKET")
+
+SUPABASE_PUBLIC_STORAGE_URL = (
+    "https://lnuseeqadohcgfwgabkr.supabase.co/storage/v1/object/public"
+)
+LOGIN_REDIRECT_URL ='map'
+LOGOUT_REDIRECT_URL ='home'

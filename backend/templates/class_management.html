@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block title %}Class Coordinator · UNIMAP{% endblock %}
+{% block content %}
+<div class="cc-dashboard">
+  <section class="cc-hero">
+    <div class="cc-hero-copy">
+      <span class="cc-kicker">CLASS COORDINATOR WORKSPACE</span>
+      <h1>Academic management</h1>
+      <p>Prepare course lists, schedule classes and manage your assigned cohorts from one workspace.</p>
+      <div class="cc-hero-meta">
+        <span class="cc-meta-pill">{{ profile.university.name|default:"UNIMAP campus" }}</span>
+        <span class="cc-meta-pill">{{ profile.display_name }}</span>
+      </div>
+    </div>
+    <a class="secondary-btn cc-back-link" href="{% url 'classes' %}">← Back to Classes</a>
+  </section>
+
+  <nav class="cc-shortcuts" aria-label="Workspace sections">
+    <a href="#cohort-section"><span class="cc-shortcut-icon">01</span><span><b>My cohorts</b><small>Assignments and levels</small></span><span class="cc-shortcut-arrow">↗</span></a>
+    <a href="#form-b"><span class="cc-shortcut-icon">02</span><span><b>Form B</b><small>Upload and publish courses</small></span><span class="cc-shortcut-arrow">↗</span></a>
+    <a href="#create-class"><span class="cc-shortcut-icon">03</span><span><b>Create a class</b><small>Schedule a session</small></span><span class="cc-shortcut-arrow">↗</span></a>
+    <a href="#timetable"><span class="cc-shortcut-icon">04</span><span><b>Timetable</b><small>Upload cohort timetable</small></span><span class="cc-shortcut-arrow">↗</span></a>
+  </nav>
+
+  <div id="ccNotice" class="cc-notice" role="status" hidden></div>
+
+  <section class="cc-metrics" aria-label="Workspace summary">
+    <article class="cc-metric"><span class="cc-metric-label">Assigned cohorts</span><strong id="metricCohorts">—</strong><small>Active assignments</small></article>
+    <article class="cc-metric"><span class="cc-metric-label">Form Bs</span><strong id="metricForms">—</strong><small>Uploaded course lists</small></article>
+    <article class="cc-metric"><span class="cc-metric-label">Published</span><strong id="metricPublished">—</strong><small>Ready for class creation</small></article>
+    <article class="cc-metric"><span class="cc-metric-label">Scheduled classes</span><strong id="metricClasses">—</strong><small>Sessions in your cohorts</small></article>
+  </section>
+
+  <section class="card cc-panel" id="cohort-section">
+    <div class="cc-section-heading">
+      <div><span class="cc-section-index">01 / ASSIGNMENTS</span><h2>My cohorts</h2><p class="muted">Choose a cohort to prefill the academic forms. Assignments are managed by a School Admin or University Admin.</p></div>
+      <span class="cc-section-icon">◎</span>
+    </div>
+    <div id="cohorts" class="cc-cohort-grid"><div class="cc-loading">Loading your assignments…</div></div>
+    <div id="noAssignments" class="cc-empty-state" hidden>
+      <span class="cc-empty-icon">＋</span>
+      <div><h3>No active cohort assignments</h3><p>Your account is recognized as a Class Coordinator, but no cohort has been assigned to it yet. Ask a School Admin to assign your option and level. Once assigned, the forms below will become available.</p></div>
+    </div>
+  </section>
+
+  <section class="card cc-panel" id="form-b">
+    <div class="cc-section-heading">
+      <div><span class="cc-section-index">02 / COURSE SETUP</span><h2>Form B management</h2><p class="muted">Upload a Form B file to extract its courses. Review the extracted course list before publishing it for matching students.</p></div>
+      <span class="cc-section-icon">▤</span>
+    </div>
+    <form id="formBForm" enctype="multipart/form-data" class="cc-form-grid">
+      <label>Academic year<select name="academic_year" id="fbYear" required></select></label>
+      <label>Semester<select name="semester" id="fbSemester" required></select></label>
+      <label>Department<select name="department" id="fbDepartment" required></select></label>
+      <label>Option<select name="option" id="fbOption" required></select></label>
+      <label>Level<select name="level" id="fbLevel" required></select></label>
+      <label>Form B title <span class="cc-optional">Optional</span><input name="title" placeholder="e.g. Software Engineering · Level 200"></label>
+      <label class="cc-field-full">Choose Form B file<input name="file" type="file" accept=".pdf,.xlsx,.xlsm,.docx,.csv,.txt" required><small>Accepted formats: PDF, Excel, Word, CSV or text.</small></label>
+      <div class="cc-field-full cc-form-actions"><button class="primary-btn" type="submit">Upload and extract courses <span>→</span></button><span class="cc-form-hint">Publishing generates enrollments for students in the matching cohort.</span></div>
+    </form>
+    <div id="formBResult" class="cc-result" role="status" aria-live="polite"></div>
+    <div class="cc-list-heading"><h3>Uploaded Form Bs</h3><span class="cc-list-caption">Drafts can be published when ready</span></div>
+    <div id="formBList" class="cc-form-list"><div class="cc-loading">Loading Form Bs…</div></div>
+  </section>
+
+  <section class="card cc-panel" id="create-class">
+    <div class="cc-section-heading">
+      <div><span class="cc-section-index">03 / CLASS SCHEDULING</span><h2>Create a class</h2><p class="muted">A class must use a published Form B and a course listed in that Form B for the selected cohort.</p></div>
+      <span class="cc-section-icon">◷</span>
+    </div>
+    <form id="classForm" class="cc-form-grid">
+      <label class="cc-field-full">Published Form B<select name="form_b" id="classFormB" required></select><small>Choose the published course list for this cohort first.</small></label>
+      <label>Course<select name="course" id="classCourse" required disabled><option value="">Select a Form B first</option></select></label>
+      <label>Option<select name="option" id="classOption" required></select></label>
+      <label>Level<select name="level" id="classLevel" required></select></label>
+      <label>Building<select name="building" id="classBuilding"><option value="">Select building (optional)</option></select></label>
+      <label>Room<input name="room" placeholder="e.g. Lab 2 or Room 14"></label>
+      <label>Date<input name="session_date" id="classDate" type="date" required></label>
+      <label>Day<select name="day_of_week" id="classDay" required><option value="0">Monday</option><option value="1">Tuesday</option><option value="2">Wednesday</option><option value="3">Thursday</option><option value="4">Friday</option><option value="5">Saturday</option><option value="6">Sunday</option></select></label>
+      <label>Start time<input name="start_time" type="time" required></label>
+      <label>End time<input name="end_time" type="time" required></label>
+      <div class="cc-field-full cc-form-actions"><button class="primary-btn" type="submit">Create class session <span>→</span></button><span class="cc-form-hint">Students can mark attendance only while the session is active.</span></div>
+    </form>
+    <div id="classResult" class="cc-result" role="status" aria-live="polite"></div>
+    <div class="cc-list-heading"><h3>Upcoming and recent sessions</h3><span class="cc-list-caption">Sessions in your assigned cohorts</span></div>
+    <div id="classList" class="cc-session-list"><div class="cc-loading">Loading sessions…</div></div>
+  </section>
+
+  <section class="card cc-panel" id="timetable">
+    <div class="cc-section-heading">
+      <div><span class="cc-section-index">04 / TIMETABLE</span><h2>Timetable upload</h2><p class="muted">Upload a timetable for one of your assigned cohorts. The school and department are filled from your account and selected assignment.</p></div>
+      <span class="cc-section-icon">▦</span>
+    </div>
+    <form id="ttForm" enctype="multipart/form-data" class="cc-form-grid">
+      <input name="school" id="ttSchool" type="hidden" value="{{ profile.school_id|default:'' }}">
+      <input name="department" id="ttDepartment" type="hidden">
+      <div class="cc-readonly-summary"><span>School</span><strong id="ttSchoolName">{{ profile.school.name|default:"Your assigned school" }}</strong></div>
+      <div class="cc-readonly-summary"><span>Department</span><strong id="ttDepartmentName">Select a cohort above</strong></div>
+      <label>Option<select name="option" id="ttOption" required></select></label>
+      <label>Level<select name="level" id="ttLevel" required></select></label>
+      <label class="cc-field-full">Timetable title<input name="title" placeholder="e.g. Software Engineering Level 200 · Semester 1" required></label>
+      <label class="cc-field-full">Timetable file<input name="file" type="file" accept=".pdf,.xlsx,.xls,.doc,.docx,.csv,.jpg,.jpeg,.png" required><small>Choose the timetable document or image used by your cohort.</small></label>
+      <div class="cc-field-full cc-form-actions"><button class="secondary-btn" type="submit">Upload timetable <span>↑</span></button></div>
+    </form>
+    <div id="ttResult" class="cc-result" role="status" aria-live="polite"></div>
+  </section>
+</div>
+
+<script>
+const csrf=()=>document.cookie.match(/csrftoken=([^;]+)/)?.[1]||"";
+const state={assignments:[],forms:[],years:[],semesters:[],buildings:[],classes:[],selectedAssignment:null};
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const showResult=(id,message,ok=true)=>{const el=$(id);el.textContent=message;el.classList.toggle("is-error",!ok);el.classList.toggle("is-success",ok);};
+
+function setOptions(el,items,valueFn,labelFn,placeholder="Select…"){
+  el.innerHTML=`<option value="">${esc(placeholder)}</option>`+items.map(x=>`<option value="${esc(valueFn(x))}">${esc(labelFn(x))}</option>`).join("");
+}
+function setFormAvailability(enabled){
+  ["formBForm","classForm","ttForm"].forEach(id=>{
+    const form=$(id); if(!form)return;
+    form.querySelectorAll("input,select,button").forEach(el=>{ if(el.type!=="hidden")el.disabled=!enabled; });
+  });
+  if(!enabled){
+    $("classCourse").innerHTML='<option value="">A cohort assignment is required</option>';
+    $("classFormB").innerHTML='<option value="">No published Form B available</option>';
+  }
+}
+function populateAssignments(){
+  const wrap=$("cohorts");
+  wrap.innerHTML=state.assignments.length?state.assignments.map((a,i)=>
+    `<button type="button" class="cc-cohort-card ${state.selectedAssignment&&String(state.selectedAssignment.id)===String(a.id)?"is-selected":""}" data-assignment="${esc(a.id)}" aria-pressed="${state.selectedAssignment&&String(state.selectedAssignment.id)===String(a.id)?"true":"false"}">
+      <span class="cc-cohort-top"><span class="cc-cohort-label">COHORT ${String(i+1).padStart(2,"0")}</span><span class="cc-cohort-check">✓</span></span>
+      <strong>${esc(a["option__name"])}</strong><span class="cc-cohort-dept">${esc(a["option__department__name"])}</span>
+      <span class="cc-cohort-bottom"><span>Level ${esc(a.level)}</span><span>Use cohort →</span></span>
+    </button>`).join(""):'<div class="cc-loading">No active assignments have been returned for this account.</div>';
+  $("noAssignments").hidden=state.assignments.length>0;
+  $("metricCohorts").textContent=state.assignments.length;
+  if(state.assignments.length){
+    setFormAvailability(true);
+    const chosen=state.assignments.find(a=>state.selectedAssignment&&String(a.id)===String(state.selectedAssignment.id))||state.assignments[0];
+    applyAssignment(chosen);
+  }else{
+    state.selectedAssignment=null;setFormAvailability(false);
+    ["fbYear","fbSemester","fbDepartment","fbOption","fbLevel","classOption","classLevel","ttOption","ttLevel"].forEach(id=>$(id).innerHTML='<option value="">Assignment required</option>');
+    $("ttDepartmentName").textContent="No active cohort assignment";
+  }
+}
+function applyAssignment(a){
+  if(!a)return;
+  state.selectedAssignment=a;
+  const opts=[a];
+  setOptions($("fbDepartment"),opts,x=>x["option__department_id"],x=>x["option__department__name"]);
+  setOptions($("fbOption"),opts,x=>x.option_id,x=>x["option__name"]);
+  setOptions($("fbLevel"),opts,x=>x.level,x=>`Level ${x.level}`);
+  setOptions($("classOption"),opts,x=>x.option_id,x=>x["option__name"]);
+  setOptions($("classLevel"),opts,x=>x.level,x=>`Level ${x.level}`);
+  setOptions($("ttOption"),opts,x=>x.option_id,x=>x["option__name"]);
+  setOptions($("ttLevel"),opts,x=>x.level,x=>`Level ${x.level}`);
+  // These select lists contain only this coordinator's assigned cohort, so preselect it.
+  $("fbDepartment").value=String(a["option__department_id"]||"");
+  $("fbOption").value=String(a.option_id||"");
+  $("fbLevel").value=String(a.level||"");
+  $("classOption").value=String(a.option_id||"");
+  $("classLevel").value=String(a.level||"");
+  $("ttOption").value=String(a.option_id||"");
+  $("ttLevel").value=String(a.level||"");
+  $("ttSchool").value="{{ profile.school_id|default:''|escapejs }}";
+  $("ttDepartment").value=a["option__department_id"]||"";
+  $("ttDepartmentName").textContent=a["option__department__name"]||"Selected department";
+  document.querySelectorAll(".cc-cohort-card").forEach(b=>{
+    const selected=String(b.dataset.assignment)===String(a.id);b.classList.toggle("is-selected",selected);b.setAttribute("aria-pressed",selected?"true":"false");
+  });
+}
+function renderForms(){
+  $("metricForms").textContent=state.forms.length;
+  $("metricPublished").textContent=state.forms.filter(f=>f.status==="published").length;
+  $("formBList").innerHTML=state.forms.length?state.forms.map(f=>{
+    const courses=(f.courses||[]).map(c=>`<span class="cc-course-tag">${esc(c.course_code)} · ${esc(c.course_name)}</span>`).join("");
+    const publish=f.status==="draft"?`<button type="button" class="secondary-btn publish-form" data-id="${esc(f.id)}">Publish Form B →</button>`:"";
+    const badge=f.status==="published"?"is-published":"is-draft";
+    const assigned=state.assignments.find(a=>String(a.option_id)===String(f.option)&&String(a.level)===String(f.level));
+    const cohortLabel=assigned?`${assigned["option__name"]} · ${assigned["option__department__name"]}`:`Option ${f.option}`;
+    return `<article class="cc-form-item"><div class="cc-form-item-head"><div><strong>${esc(f.title||`${f.academic_year_name} · ${f.semester_name}`)}</strong><span>${esc(f.academic_year_name)} · ${esc(f.semester_name)} · ${esc(cohortLabel)} · Level ${esc(f.level)}</span></div><span class="cc-status ${badge}">${esc(f.status)}</span></div><div class="cc-course-tags">${courses||'<span class="muted">No extracted courses returned.</span>'}</div><div class="cc-form-item-actions"><span>${(f.courses||[]).length} extracted course${(f.courses||[]).length===1?"":"s"}</span>${publish}</div></article>`;
+  }).join(""):'<div class="cc-empty-inline">No Form Bs uploaded yet. Select your assigned cohort above and upload a course list to get started.</div>';
+  document.querySelectorAll(".publish-form").forEach(b=>b.onclick=async()=>{
+    b.disabled=true;b.textContent="Publishing…";
+    try{const r=await fetch("/api/academic/form-b/"+b.dataset.id+"/publish/",{method:"POST",headers:{"X-CSRFToken":csrf()}});const d=await r.json();showResult("formBResult",d.message||d.detail||(r.ok?"Form B published.":"Unable to publish Form B."),r.ok);if(r.ok)await load();}
+    catch(e){showResult("formBResult","Could not reach the server. Check your connection and try again.",false);}
+    finally{b.disabled=false;b.textContent="Publish Form B →";}
+  });
+  const published=state.forms.filter(f=>f.status==="published");
+  setOptions($("classFormB"),published,f=>f.id,f=>`${f.academic_year_name} · ${f.semester_name} · ${f.option} · Level ${f.level}`,published.length?"Select published Form B…":"No published Form B available");
+  $("classCourse").disabled=true;
+  $("classCourse").innerHTML='<option value="">Select a Form B first</option>';
+}
+function renderClasses(){
+  const classes=state.classes||[];
+  $("metricClasses").textContent=classes.length;
+  $("classList").innerHTML=classes.length?classes.map(c=>`<article class="cc-session-item"><span class="cc-session-date"><b>${esc(c.session_date||"—")}</b><small>${esc(c.start_time||"")}${c.end_time?` – ${esc(c.end_time)}`:""}</small></span><span class="cc-session-main"><strong>${esc(c.course_code||"")} ${esc(c.course_name||"Class session")}</strong><small>${esc(c.option_name||"")} · Level ${esc(c.level)}${c.building_name?` · ${esc(c.building_name)}`:""}${c.room?` · ${esc(c.room)}`:""}</small></span><span class="cc-status ${c.status==="active"?"is-published":"is-neutral"}">${esc(c.status||"scheduled")}</span></article>`).join(""):'<div class="cc-empty-inline">No classes are currently listed for your assigned cohorts. Create a class after publishing a Form B.</div>';
+}
+async function load(){
+  const r=await fetch("/api/academic/cc/workspace/",{headers:{"Accept":"application/json"}});
+  const d=await r.json();
+  if(!r.ok)throw new Error(d.detail||"Unable to load the Class Coordinator workspace.");
+  state.assignments=d.assignments||[];state.forms=d.form_bs||[];state.years=d.academic_years||[];state.semesters=d.semesters||[];state.classes=d.classes||[];
+  setOptions($("fbYear"),state.years,y=>y.id,y=>y.name);
+  setOptions($("fbSemester"),state.semesters,s=>s.id,s=>`${s.academic_year_name} · ${String(s.name||"").replace("_"," ")}`);
+  populateAssignments();renderForms();renderClasses();
+  const br=await fetch("/api/buildings/?university="+encodeURIComponent("{{ profile.university.short_name|escapejs }}"),{headers:{"Accept":"application/json"}});
+  if(br.ok){const bd=await br.json();state.buildings=Array.isArray(bd)?bd:(bd.results||[]);setOptions($("classBuilding"),state.buildings,x=>x.id,x=>x.name,"No building selected");}
+  if(!$("classDate").value){const now=new Date();const localDate=new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,10);$("classDate").value=localDate;}
+}
+$("cohorts").addEventListener("click",e=>{const b=e.target.closest(".cc-cohort-card");if(!b)return;const a=state.assignments.find(x=>String(x.id)===String(b.dataset.assignment));if(a)applyAssignment(a);});
+$("formBForm").addEventListener("submit",async e=>{
+  e.preventDefault();const btn=e.submitter; if(btn){btn.disabled=true;btn.dataset.original=btn.innerHTML;btn.textContent="Uploading and extracting…";}
+  try{const r=await fetch("/api/academic/form-b/",{method:"POST",headers:{"X-CSRFToken":csrf()},body:new FormData(e.target)});const d=await r.json();showResult("formBResult",d.detail||(r.ok?"Form B uploaded and courses extracted successfully.":"Form B upload failed."),r.ok);if(r.ok){e.target.reset();await load();}}
+  catch(err){showResult("formBResult","Upload failed because the server could not be reached. Try again when connected.",false);}
+  finally{if(btn){btn.disabled=false;btn.innerHTML=btn.dataset.original||"Upload and extract courses →";}}
+});
+$("classFormB").addEventListener("change",()=>{
+  const f=state.forms.find(x=>String(x.id)===$("classFormB").value);
+  if(!f){$("classCourse").disabled=true;$("classCourse").innerHTML='<option value="">Select a Form B first</option>';return;}
+  setOptions($("classCourse"),f.courses||[],x=>x.course,x=>`${x.course_code} · ${x.course_name}`,"Select course…");$("classCourse").disabled=!(f.courses||[]).length;
+  const a=state.assignments.find(x=>String(x.option_id)===String(f.option)&&String(x.level)===String(f.level));if(a)applyAssignment(a);
+});
+$("classForm").addEventListener("submit",async e=>{
+  e.preventDefault();const btn=e.submitter;if(btn){btn.disabled=true;btn.dataset.original=btn.innerHTML;btn.textContent="Creating class…";}
+  try{const r=await fetch("/api/academic/class-sessions/create/",{method:"POST",headers:{"X-CSRFToken":csrf()},body:new FormData(e.target)});const d=await r.json();showResult("classResult",d.detail||(r.ok?"Class session created successfully.":"Unable to create class."),r.ok);if(r.ok){e.target.reset();$("classCourse").disabled=true;$("classCourse").innerHTML='<option value="">Select a Form B first</option>';await load();}}
+  catch(err){showResult("classResult","Could not reach the server. Check your connection and try again.",false);}
+  finally{if(btn){btn.disabled=false;btn.innerHTML=btn.dataset.original||"Create class session →";}}
+});
+$("ttForm").addEventListener("submit",async e=>{
+  e.preventDefault();const btn=e.submitter;if(btn){btn.disabled=true;btn.dataset.original=btn.innerHTML;btn.textContent="Uploading timetable…";}
+  try{const r=await fetch("/api/academic/timetables/",{method:"POST",headers:{"X-CSRFToken":csrf()},body:new FormData(e.target)});const d=await r.json();showResult("ttResult",d.detail||(r.ok?"Timetable uploaded successfully.":"Timetable upload failed."),r.ok);if(r.ok)e.target.reset();}
+  catch(err){showResult("ttResult","Could not reach the server. Check your connection and try again.",false);}
+  finally{if(btn){btn.disabled=false;btn.innerHTML=btn.dataset.original||"Upload timetable ↑";}}
+});
+(async()=>{try{await load();}catch(e){$("ccNotice").hidden=false;$("ccNotice").textContent=e.message;$("ccNotice").classList.add("is-error");}})();
+</script>
+{% endblock %}

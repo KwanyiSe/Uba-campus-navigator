@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Sign in · UNIMAP{% endblock %}
+
+{% block content %}
+
+<div class="auth-page">
+
+    <div class="auth-wrapper">
+
+        <div class="auth-brand">
+
+            <img
+                src="{% static 'img/logo.png' %}"
+                class="auth-brand-logo"
+                alt="UNIMAP"
+            >
+
+            <h1 class="auth-brand-name">UNIMAP</h1>
+
+            <p class="auth-brand-subtitle">
+                University Campus Navigation
+            </p>
+
+        </div>
+
+
+        <div class="auth-card">
+
+            <h1>Welcome back</h1>
+
+            <p class="auth-description">
+                Sign in to access your campus, classes,
+                attendance and university updates.
+            </p>
+
+
+            <form method="post" class="unimap-form">
+
+                {% csrf_token %}
+
+                <div class="unimap-field">
+
+                    <label for="username">
+                        Email or username
+                    </label>
+
+                    <input
+                        id="username"
+                        type="text"
+                        name="username"
+                        autocomplete="username"
+                        placeholder="Enter your email or username"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="unimap-field">
+
+                    <label for="password">
+                        Password
+                    </label>
+
+                    <div class="password-wrapper">
+
+                        <input
+                            id="password"
+                            type="password"
+                            name="password"
+                            autocomplete="current-password"
+                            placeholder="Enter your password"
+                            required
+                        >
+
+                        <button
+                            type="button"
+                            class="password-toggle"
+                            onclick="togglePassword()"
+                            aria-label="Show password"
+                        >
+                            ◉
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="unimap-primary-button"
+                >
+                    Sign in
+                </button>
+
+            </form>
+
+
+            <div class="auth-footer">
+
+                New to UNIMAP?
+
+                <a href="{% url 'register_page' %}">
+                    Create account
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+function togglePassword() {
+
+    const password =
+        document.getElementById("password");
+
+    password.type =
+        password.type === "password"
+            ? "text"
+            : "password";
+}
+
+</script>
+
+{% endblock %}

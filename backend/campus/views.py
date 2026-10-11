@@ -55,7 +55,14 @@ def campus_map(request, short_name=None):
             active=True
         )
     else:
-        university = University.objects.filter(active=True).first()
+        # Logged-in users stay scoped to their own university.
+        # Guests fall back to the first active university.
+        profile = getattr(request.user, "profile", None) if request.user.is_authenticated else None
+        university = (
+            profile.university
+            if profile and profile.university and profile.university.active
+            else University.objects.filter(active=True).first()
+        )
 
     # If no university exists
     if not university:
@@ -79,10 +86,33 @@ def campus_map(request, short_name=None):
             [university.max_lat, university.min_lng],  # Left (west) → copy longitude → this is your min_lng
         ]
 
+    # Splash branding: use the user's school logo when available,
+    # otherwise the university logo, otherwise the UNIMAP logo in the template.
+    splash_logo_url = None
+    if request.user.is_authenticated:
+        profile = getattr(request.user, "profile", None)
+        school = getattr(profile, "school", None) if profile else None
+        if school and getattr(school, "logo", None):
+            try:
+                if school.logo:
+                    splash_logo_url = school.logo.url
+            except ValueError:
+                splash_logo_url = None
+
+    if not splash_logo_url and getattr(university, "logo", None):
+        try:
+            if university.logo:
+                splash_logo_url = university.logo.url
+        except ValueError:
+            splash_logo_url = None
+
     # Pass JSON to template
     context = {
         "university": university,
+        "profile": getattr(request.user, "profile", None) if request.user.is_authenticated else None,
         "campus_boundary_json": json.dumps(campus_boundary),
+        "splash_logo_url": splash_logo_url,
+        "show_unimap_splash": request.session.pop("show_unimap_splash", False),
     }
 
     return render(request, "campus_map.html", context)

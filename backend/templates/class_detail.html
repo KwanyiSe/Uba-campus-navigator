@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Class · UNIMAP{% endblock %}
+{% block content %}
+<div id="detail"><div class="card">Loading class…</div></div>
+
+<script>
+const id=new URLSearchParams(location.search).get("id")||location.pathname.split("/").filter(Boolean).pop();
+const role="{{ profile.role|default:'' }}";
+const staffRoles=["cc","lecturer","school_admin","admin"];
+const csrf=()=>document.cookie.match(/csrftoken=([^;]+)/)?.[1]||"";
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+async function load(){
+  const r=await fetch("/api/academic/schedule/");
+  const d=await r.json();
+  const x=d.find(v=>String(v.id)===String(id));
+  if(!x){detail.innerHTML='<div class="card error-card">Class not found or outside your access scope.</div>';return;}
+
+  let controls="";
+  if(staffRoles.includes(role)){
+    controls=`<div class="cc-detail-actions">
+      ${x.status==="scheduled"?'<button class="primary-btn" id="startClass">Start Class</button>':""}
+      ${x.status==="active"?'<button class="secondary-btn" id="endClass">End Class</button>':""}
+      ${x.status!=="completed"&&x.status!=="cancelled"?'<button class="danger-btn" id="cancelClass">Cancel Class</button>':""}
+    </div>
+    <div class="cc-detail-actions">
+      <button class="secondary-btn" id="loadAttendance">View Attendance</button>
+      <a class="secondary-btn" href="/api/academic/class-sessions/${x.id}/attendance/download/">Download CSV</a>
+    </div>
+    <div id="attendancePanel" class="cc-attendance-panel" hidden></div>`;
+  }
+
+  const studentAction=x.status==="active"&&!staffRoles.includes(role)
+    ?'<button class="primary-btn" id="mark">Mark Attendance</button>'
+    :(!staffRoles.includes(role)?'<p class="muted">Attendance is available only while the class is active.</p>':"");
+
+  detail.innerHTML=`<div class="card">
+    <div class="eyebrow">CLASS SESSION</div>
+    <h1>${esc(x.course_code)}</h1>
+    <p>${esc(x.course_name)}</p>
+    <p>${esc(x.option_name||"")} · Level ${esc(x.level||"")}</p>
+    <p>${esc(x.building_name||"TBA")} ${esc(x.room||"")}</p>
+    <p>${esc(x.session_date)} · ${esc(x.start_time)}–${esc(x.end_time)}</p>
+    <p><span class="status-pill ${x.status==="active"?"active":""}">${esc(x.status)}</span></p>
+    ${studentAction}${controls}
+  </div>`;
+
+  const mark=document.getElementById("mark"); if(mark) mark.onclick=markAttendance;
+  ["startClass","endClass","cancelClass"].forEach(a=>{const b=document.getElementById(a);if(b)b.onclick=()=>classAction(a.replace("Class","").toLowerCase());});
+  const la=document.getElementById("loadAttendance");if(la)la.onclick=loadAttendance;
+}
+
+async function classAction(action){
+  const r=await fetch("/api/academic/class-sessions/"+id+"/action/",{method:"POST",headers:{"Content-Type":"application/json","X-CSRFToken":csrf()},body:JSON.stringify({action})});
+  const d=await r.json(); alert(d.detail||"Class updated."); if(r.ok) load();
+}
+
+async function loadAttendance(){
+  const panel=document.getElementById("attendancePanel");panel.hidden=false;panel.innerHTML="<p>Loading attendance…</p>";
+  const r=await fetch("/api/academic/class-sessions/"+id+"/attendance/");const d=await r.json();
+  if(!r.ok){panel.innerHTML=`<p class="error-card">${esc(d.detail||"Unable to load attendance.")}</p>`;return;}
+  panel.innerHTML=d.map(row=>`<div class="attendance-row"><span><b>${esc(row.name)}</b><small>${esc(row.matric_number||"No matric")}</small></span><select data-student="${row.student_id}" class="attendance-select"><option value="present" ${row.status==="present"?"selected":""}>Present</option><option value="absent" ${row.status==="absent"?"selected":""}>Absent</option></select><small>${esc(row.verification_method||"Not marked")}</small></div>`).join("")||"<p class='muted'>No students found.</p>";
+  panel.querySelectorAll(".attendance-select").forEach(sel=>sel.onchange=async()=>{
+    const rr=await fetch("/api/academic/class-sessions/"+id+"/attendance/",{method:"PATCH",headers:{"Content-Type":"application/json","X-CSRFToken":csrf()},body:JSON.stringify({student:sel.dataset.student,status:sel.value})});
+    const dd=await rr.json(); if(!rr.ok) alert(dd.detail||"Unable to update attendance.");
+  });
+}
+
+function markAttendance(){
+  if(!navigator.geolocation){alert("Location services are not available on this device.");return;}
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const r=await fetch("/api/academic/class-sessions/"+id+"/mark-attendance/",{
+      method:"POST",headers:{"Content-Type":"application/json","X-CSRFToken":csrf()},
+      body:JSON.stringify({latitude:pos.coords.latitude,longitude:pos.coords.longitude,accuracy:pos.coords.accuracy})
+    });
+    const d=await r.json(); alert(d.message||d.detail||"Attendance updated.");
+  },err=>alert("Location is required to verify attendance: "+err.message),{enableHighAccuracy:true,maximumAge:10000,timeout:15000});
+}
+load();
+</script>
+{% endblock %}

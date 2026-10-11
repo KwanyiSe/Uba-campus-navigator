@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.db import models
 
 
-
+#Kwanyise@
 class University(models.Model):
     """University Model allow scalability allow SaaS achitecture"""
    
@@ -43,15 +43,26 @@ class Building(models.Model):
     longitude = models.FloatField()
     category = models.CharField(max_length=50, blank=True)
     description = models.TextField(blank=True)
+    floor = models.CharField(max_length=40, blank=True)
+    capacity = models.PositiveIntegerField(blank=True, null=True)
+    STATUS_CHOICES = (
+        ("available", "Available"),
+        ("in_use", "In Use"),
+        ("limited", "Limited"),
+        ("closed", "Closed"),
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="available")
+    opening_hours = models.CharField(max_length=120, blank=True)
     photo = models.ImageField(upload_to="buildings/photos/", blank=True, null=True)
     icon = models.ImageField(upload_to="buildings/icons/", blank=True, null=True)
+    geofence = models.JSONField(default=list, blank=True)
     
     university = models.ForeignKey(
     University,
     on_delete=models.CASCADE,
     related_name="buildings",
     null=True,
-    blank=True) # remove blank after adding university to all existing buildings for migration error
+    blank=True) #will remove blank after adding university to buildings to avoid migration errors
 
     def __str__(self):
         return self.name

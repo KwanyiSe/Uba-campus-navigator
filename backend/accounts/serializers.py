@@ -1,179 +1,124 @@
-from rest_framework import serializers
+import re
 from django.contrib.auth.models import User
-
-from .models import (
-    Profile,
-    School,
-    Department
-)
+from django.db import transaction
+from rest_framework import serializers
+from campus.models import University
+from .models import Profile, School, Department, Option
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-
-    password = serializers.CharField(write_only=True)
-
-    university = serializers.IntegerField()
-    school = serializers.IntegerField(required=False)
-    department = serializers.IntegerField(required=False)
-
-    level = serializers.IntegerField(required=False)
-
-    matric_number = serializers.CharField(
-        required=False,
-        allow_blank=True
-    )
+    full_name = serializers.CharField(max_length=180)
+    password = serializers.CharField(write_only=True, min_length=6)
+    university = serializers.PrimaryKeyRelatedField(queryset=University.objects.filter(active=True))
+    school = serializers.PrimaryKeyRelatedField(queryset=School.objects.all(), required=False, allow_null=True)
+    department = serializers.PrimaryKeyRelatedField(queryset=Department.objects.all(), required=False, allow_null=True)
+    option = serializers.PrimaryKeyRelatedField(queryset=Option.objects.filter(active=True), required=False, allow_null=True)
+    level = serializers.IntegerField(required=False, allow_null=True)
+    matric_number = serializers.CharField(required=False, allow_blank=True, allow_null=True, max_length=20)
+    profile_picture = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = User
+        fields = ["full_name","email","password","university","school","department","option","level","matric_number","profile_picture"]
 
-        fields = [
-            "username",
-            "email",
-            "password",
-
-            "university",
-            "school",
-            "department",
-
-            "level",
-            "matric_number"
-        ]
-        
     def validate_email(self, value):
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError(
-                "Email already exists"
-            )
-
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("Email already exists.")
         return value
 
     def validate_level(self, value):
-
-        if value < 100:
-            raise serializers.ValidationError(
-                "Level must be at least 100"
-            ) # like 100 200 ect not 50 +- 
-
+        if value is not None and value < 100:
+            raise serializers.ValidationError("Level must be at least 100.")
         return value
-    
 
+    def validate(self, attrs):
+        university, school = attrs.get("university"), attrs.get("school")
+        department, option = attrs.get("department"), attrs.get("option")
+        if school and school.university_id != university.id:
+            raise serializers.ValidationError({"school":"School does not belong to selected university."})
+        if department and (not school or department.school_id != school.id):
+            raise serializers.ValidationError({"department":"Department does not belong to selected school."})
+        if option and (not department or option.department_id != department.id):
+            raise serializers.ValidationError({"option":"Option does not belong to selected department."})
+        return attrs
+        
+    @transaction.atomic
     def create(self, validated_data):
+        full_name = validated_data.pop("full_name").strip()
 
-        university_id = validated_data.pop("university")
-
-        school_id = validated_data.pop("school", None)
-
-        department_id = validated_data.pop("department", None)
-
+        university = validated_data.pop("university")
+        school = validated_data.pop("school", None)
+        department = validated_data.pop("department", None)
+        option = validated_data.pop("option", None)
         level = validated_data.pop("level", None)
+        matric = validated_data.pop("matric_number", None) or None
+        picture = validated_data.pop("profile_picture", None)
 
-        matric_number = validated_data.pop(
-            "matric_number",
-            None
-        )
+        parts = full_name.split()
+        first = parts[0]
+        last = " ".join(parts[1:]) if len(parts) > 1 else ""
+
+        base = re.sub(r"[^a-z0-9]+", "", full_name.lower()) or "user"
+
+        username = base
+        n = 1
+
+        while User.objects.filter(username=username).exists():
+            n += 1
+            username = f"{base}{n}"
 
         user = User.objects.create_user(
-            **validated_data
+            username=username,
+            email=validated_data.get("email", ""),
+            password=validated_data["password"],
+            first_name=first,
+            last_name=last,
         )
 
-        school = None
-        department = None
-
-        if school_id:
-            school = School.objects.get(
-                id=school_id
-            )
-
-        if department_id:
-            department = Department.objects.get(
-                id=department_id
-            )
-
-        Profile.objects.create(
+        profile, created = Profile.objects.get_or_create(
             user=user,
-            university_id=university_id,
+            defaults={
+                "full_name": full_name,
+                "profile_picture": picture,
+                "university": university,
+                "school": school,
+                "department": department,
+                "option": option,
+                "level": level,
+                "matric_number": matric,
+                "role": "student",
+            },)
 
-            school=school,
-            department=department,
+        if not created:
+            profile.full_name = full_name
+            profile.university = university
+            profile.school = school
+            profile.department = department
+            profile.option = option
+            profile.level = level
+            profile.matric_number = matric
+            profile.role = "student"
 
-            level=level,
+            if picture:
+                profile.profile_picture = picture
 
-            matric_number=matric_number or None,
-
-            role="student"
-        )
+            profile.save()
 
         return user
-    
-    
-    def validate(self, attrs):
-        university_id = attrs.get("university")
-        school_id = attrs.get("school")
-        department_id = attrs.get("department")
 
-        if school_id:
 
-            try:
-                school = School.objects.get(id=school_id)
-            except School.DoesNotExist:
-                raise serializers.ValidationError(
-                    "School not found"
-                )
-
-            if school.university_id != university_id:
-                raise serializers.ValidationError(
-                    "School does not belong to selected university"
-                )
-
-        if department_id:
-
-            try:
-                department = Department.objects.get(
-                    id=department_id
-                )
-            except Department.DoesNotExist:
-                raise serializers.ValidationError(
-                    "Department not found"
-                )
-
-            if school_id and department.school_id != school_id:
-                raise serializers.ValidationError(
-                    "Department does not belong to selected school"
-                )
-
-        return attrs
-    
-    
 class ProfileUpdateSerializer(serializers.ModelSerializer):
-    """allow students to update their school dpt level and matricle."""
     class Meta:
         model = Profile
-
-        fields = [
-            "school",
-            "department",
-            "level",
-            "matric_number",
-        ]
+        fields = ["full_name","profile_picture","school","department","option","level","matric_number"]
 
     def validate(self, attrs):
-
-        school = attrs.get(
-            "school",
-            self.instance.school
-        )
-
-        department = attrs.get(
-            "department",
-            self.instance.department
-        )
-
-        if school and department:
-
-            if department.school_id != school.id:
-
-                raise serializers.ValidationError(
-                    "Department does not belong to selected school"
-                )
-
+        p = self.instance
+        school = attrs.get("school", p.school); department = attrs.get("department", p.department); option = attrs.get("option", p.option)
+        if school and school.university_id != p.university_id:
+            raise serializers.ValidationError({"school":"School does not belong to your university."})
+        if department and (not school or department.school_id != school.id):
+            raise serializers.ValidationError({"department":"Department does not belong to selected school."})
+        if option and (not department or option.department_id != department.id):
+            raise serializers.ValidationError({"option":"Option does not belong to selected department."})
         return attrs

@@ -2,14 +2,12 @@ from django.contrib.admin import AdminSite
 from django.contrib import admin
 from django.utils import timezone
 from django.db import models
-
-# Import models
 from .models import Building, SiteVisit, DailyStats, University, CampusAdminUser
-
-# Import default auth models
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.admin import UserAdmin, GroupAdmin
 from django.contrib.admin.sites import AlreadyRegistered
+
+#Kwanyise@
 
 # ---------------------------
 # Custom Admin Site
@@ -115,7 +113,11 @@ class UniversityAdmin(admin.ModelAdmin):
 @admin.register(Building, site=campus_admin_site)
 class BuildingAdmin(admin.ModelAdmin):
     """Filters buildings per university for non-superusers."""
-    list_display = ("name", "category", "university")
+    list_display = ("name", "category", "status", "capacity", "floor", "university", "has_geofence")
+
+    @admin.display(boolean=True, description="Geofence")
+    def has_geofence(self, obj):
+        return bool(obj.geofence and len(obj.geofence) >= 3)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

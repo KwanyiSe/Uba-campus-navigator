@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Notifications · UNIMAP{% endblock %}
+{% block content %}
+<section class="notifications-page">
+  <div class="page-heading">
+    <div><span class="eyebrow">UNIMAP</span><h1>Notifications</h1><p class="muted">Updates about your classes and campus activity.</p></div>
+    <button id="markAllRead" class="secondary-btn" type="button">Mark all read</button>
+  </div>
+  <div id="notificationList" class="notification-list" aria-live="polite"><div class="empty-state">Loading notifications…</div></div>
+</section>
+<script>
+(function () {
+  const list = document.getElementById("notificationList");
+  const markAllButton = document.getElementById("markAllRead");
+  const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[char]);
+  const csrfToken = () => document.cookie.split("; ").find(row => row.startsWith("csrftoken="))?.split("=")[1] || "";
+  const safeInternalLink = value => {
+    const link = String(value || "").trim();
+    return link.startsWith("/") && !link.startsWith("//") ? link : "";
+  };
+
+  async function getNotifications() {
+    const response = await fetch("/api/academic/notifications/", { credentials: "same-origin" });
+    if (!response.ok) throw new Error("Unable to load notifications.");
+    return response.json();
+  }
+
+  async function updateRead(ids) {
+    const response = await fetch("/api/academic/notifications/", {
+      method: "PATCH",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken() },
+      body: JSON.stringify(ids ? { ids } : {})
+    });
+    if (!response.ok) throw new Error("Unable to update notifications.");
+  }
+
+  async function load() {
+    list.innerHTML = '<div class="empty-state">Loading notifications…</div>';
+    try {
+      const data = await getNotifications();
+      const items = Array.isArray(data.notifications) ? data.notifications : [];
+      if (!items.length) {
+        list.innerHTML = '<div class="empty-state">You\'re all caught up. No notifications yet.</div>';
+        return;
+      }
+      list.innerHTML = items.map(item => {
+        const link = safeInternalLink(item.link);
+        return `<article class="notification-card ${item.read ? "read" : "unread"}" data-id="${Number(item.id)}">
+          <span class="notification-dot" aria-hidden="true"></span>
+          <div class="notification-content">
+            <strong>${escapeHtml(item.title)}</strong>
+            <p>${escapeHtml(item.body)}</p>
+            <small>${escapeHtml(item.created_at ? new Date(item.created_at).toLocaleString() : "")}</small>
+            <div class="notification-actions">
+              ${link ? `<a class="notification-open" href="${escapeHtml(link)}" data-open-id="${Number(item.id)}">Open</a>` : ""}
+              ${!item.read ? `<button class="notification-mark-read" type="button" data-read-id="${Number(item.id)}">Mark as read</button>` : '<small>Read</small>'}
+            </div>
+          </div>
+        </article>`;
+      }).join("");
+    } catch (error) {
+      list.innerHTML = '<div class="empty-state">Notifications could not be loaded. Please refresh and try again.</div>';
+    }
+  }
+
+  list.addEventListener("click", async event => {
+    const readButton = event.target.closest("[data-read-id]");
+    const openLink = event.target.closest("[data-open-id]");
+    if (readButton) {
+      const id = Number(readButton.dataset.readId);
+      readButton.disabled = true;
+      try { await updateRead([id]); await load(); }
+      catch (error) { readButton.disabled = false; readButton.textContent = "Try again"; }
+      return;
+    }
+    if (openLink) {
+      const card = openLink.closest(".notification-card");
+      if (card && card.classList.contains("unread")) {
+        event.preventDefault();
+        const id = Number(openLink.dataset.openId);
+        const destination = openLink.href;
+        try { await updateRead([id]); } catch (error) {}
+        window.location.assign(destination);
+      }
+    }
+  });
+
+  markAllButton.addEventListener("click", async () => {
+    markAllButton.disabled = true;
+    try { await updateRead(); await load(); }
+    catch (error) { alert("Could not mark notifications as read. Please try again."); }
+    finally { markAllButton.disabled = false; }
+  });
+
+  load();
+})();
+</script>
+{% endblock %}

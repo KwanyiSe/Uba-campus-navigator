@@ -1,0 +1,24 @@
+backend/academic/serializers.py:116: trailing whitespace.
+[32m+[m[41m        [m
+backend/accounts/models.py:55: trailing whitespace.
+[32m+[m[41m    [m
+backend/accounts/models.py:56: trailing whitespace.
+[32m+[m[41m    [m
+backend/accounts/models.py:62: trailing whitespace.
+[32m+[m[41m        [m
+backend/accounts/serializers.py:44: trailing whitespace.
+[32m+[m[41m        [m
+backend/static/css/accounts.css:168: trailing whitespace.
+[32m+[m[41m  [m
+backend/static/js/news.js:1009: trailing whitespace.
+[32m+[m[41m   [m
+backend/templates/home.html:212: trailing whitespace.
+[32m+[m[41m    [m
+backend/templates/home.html:234: trailing whitespace.
+[32m+[m[41m        [m
+backend/templates/home.html:254: trailing whitespace.
+[32m+[m[41m        [m
+backend/templates/partials/navbar.html:20: trailing whitespace.
+[32m+[m[41m        [m
+backend/users/views.py:76: trailing whitespace.
+[32m+[m[41m    [m
