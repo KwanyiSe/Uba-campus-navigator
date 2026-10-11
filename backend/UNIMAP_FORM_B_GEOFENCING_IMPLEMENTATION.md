@@ -20,3 +20,4 @@
 
 ## Automatic class ending
 A class can only be started on its scheduled date after `start_time` and before `end_time`. The CC may still end a class early with the End Class action. Once `end_time` is reached, the server considers the session closed, reconciles it to `completed` when the academic APIs are touched, and attendance has an explicit end-time guard, so a forgotten End Class button cannot keep attendance open.
+Base is now set!

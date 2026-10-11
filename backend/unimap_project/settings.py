@@ -15,24 +15,24 @@ from decouple import config
 import os
 from pathlib import Path
 
-# BASE DIRECTORY
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 CORS_ALLOW_ALL_ORIGINS = True
 
-# SECURITY
 SECRET_KEY = config("SECRET_KEY")
 
-# ORS_KEY is for OpenRouteService API
 ORS_KEY = config("ORS_KEY")
 
-# DEBUG mode
 DEBUG = True
 
-# Hosts allowed to serve the app
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'Uba-navigator.onrender.com']
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'uba-navigator.onrender.com',        
+    'unimaps.tech',                       
+    'www.unimaps.tech',                  
+]
 
-# MEDIA (User uploads)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
@@ -115,8 +115,8 @@ WSGI_APPLICATION = 'unimap_project.wsgi.application'
 
 
 # ==================== DATABASE CONFIGURATION ====================
-# This works for BOTH:
-# -  im using neon for production  i can control that in .env
+# works for BOTH:
+# - currently using neon for production it can be control in .env
 # - Team (SQLite) - Just set USE_SQLITE=True in their .env
 # ================================================================
 
