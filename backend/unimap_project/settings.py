@@ -23,7 +23,7 @@ SECRET_KEY = config("SECRET_KEY")
 
 ORS_KEY = config("ORS_KEY")
 
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     'localhost',
