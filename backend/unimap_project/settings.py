@@ -28,9 +28,15 @@ DEBUG = False
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    'uba-navigator.onrender.com',        
-    'unimaps.tech',                       
-    'www.unimaps.tech',                  
+    'uba-navigator.onrender.com',
+    'unimaps.tech',
+    'www.unimaps.tech',
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://unimaps.tech',
+    'https://www.unimaps.tech',
+    'https://uba-navigator.onrender.com',
 ]
 
 MEDIA_URL = '/media/'
@@ -41,12 +47,10 @@ INSTALLED_APPS = [
     # Third-party apps
     'rest_framework',
     'corsheaders',
-    'cloudinary', #currently not working 
-    'cloudinary_storage',
-    
+
     # Your apps
     'campus.apps.CampusConfig',
-    
+
     #new apps still in development
     'accounts.apps.AccountsConfig',
     'academic.apps.AcademicConfig',
@@ -54,8 +58,8 @@ INSTALLED_APPS = [
     # 'academic.apps.AcademicConfig',
     # 'attendance.apps.AttendanceConfig',
     # 'associate.apps.AssociateConfig',
-        
-    # Default Django appsjj
+
+    # Default Django apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -165,17 +169,19 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# STORAGES (Django 5.x - replaces STATICFILES_STORAGE)
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # DEFAULT AUTO FIELD
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# CLOUDINARY MEDIA STORAGE
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
-    'API_KEY': config('CLOUDINARY_API_KEY'),
-    'API_SECRET': config('CLOUDINARY_API_SECRET'),
-}
 
 
 # Supabase S3 Storage
@@ -190,5 +196,6 @@ SUPABASE_S3_NEWS_BUCKET = config("SUPABASE_S3_NEWS_BUCKET")
 SUPABASE_PUBLIC_STORAGE_URL = (
     "https://lnuseeqadohcgfwgabkr.supabase.co/storage/v1/object/public"
 )
-LOGIN_REDIRECT_URL ='map'
-LOGOUT_REDIRECT_URL ='home'
+
+LOGIN_REDIRECT_URL = 'map'
+LOGOUT_REDIRECT_URL = 'home'
