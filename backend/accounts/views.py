@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 from rest_framework.authentication import SessionAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.response import Response
@@ -16,6 +17,7 @@ class RegisterView(generics.CreateAPIView):
 
 
 class ProfileView(APIView):
+    parser_classes = [JSONParser, FormParser, MultiPartParser]
     authentication_classes = [SessionAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request):
@@ -27,9 +29,15 @@ class ProfileView(APIView):
         return Response(profile_payload(p))
 
     def patch(self, request):
-        s = ProfileUpdateSerializer(request.user.profile, data=request.data, partial=True)
+        profile = getattr(request.user, "profile", None)
+        if profile is None:
+            university = University.objects.filter(active=True).first()
+            if university is None:
+                return Response({"detail": "No active university is configured."}, status=503)
+            profile = Profile.objects.create(user=request.user, university=university)
+        s = ProfileUpdateSerializer(profile, data=request.data, partial=True)
         s.is_valid(raise_exception=True); s.save()
-        return Response(profile_payload(request.user.profile))
+        return Response(profile_payload(s.instance))
 
 
 def profile_payload(p):

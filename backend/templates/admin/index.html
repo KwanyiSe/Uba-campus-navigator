@@ -16,10 +16,18 @@
       <strong>Visitors Today:</strong>
       {{ visitors_today|default:"0" }}
     </li>
+    <li>
+      <strong>Registered Accounts:</strong>
+      {{ registered_accounts|default:"0" }}
+    </li>
+    <li>
+      <strong>Registered Students:</strong>
+      {{ registered_students|default:"0" }}
+    </li>
   </ul>
 
   <p style="color: #666; font-size: 12px;">
-    Based on browser sessions (no login required).
+    Visitor counts are browser-session estimates. Registered account/student counts come from active profile records and are separate from guests.
   </p>
 </div>
 <!-- ===== End Site Statistics ===== -->

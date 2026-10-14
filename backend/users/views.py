@@ -83,7 +83,9 @@ def profile_view(request):return render(request,"accounts/profile.html",{"profil
 def profile_edit_view(request):
     p=ensure_profile(request.user)
     if request.method=="POST":
-        data={k:request.POST.get(k) or None for k in ["full_name","school","department","option","level","matric_number"]}
+        data={k:request.POST.get(k, "") for k in ["full_name","school","department","option","level","matric_number"]}
+        for key in ("school", "department", "option", "level", "matric_number"):
+            if data.get(key) == "": data[key] = None
         if request.FILES.get("profile_picture"):data["profile_picture"]=request.FILES["profile_picture"]
         s=ProfileUpdateSerializer(p,data=data,partial=True)
         if s.is_valid():s.save();messages.success(request,"Profile updated successfully.");return redirect("profile")

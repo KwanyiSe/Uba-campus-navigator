@@ -547,3 +547,102 @@
   .profile-picture-viewer-panel { padding:18px 14px 20px; border-radius:20px; }
   .profile-picture-viewer-panel > img { max-height:70vh; border-radius:13px; }
 }
+
+
+/* Profile account/support menu: explicit styling so links render as cards/buttons. */
+.profile-menu-section {
+  display: block;
+  margin: 28px 0 12px;
+}
+.profile-menu-section h2 {
+  margin: 0 0 14px;
+  color: var(--text, #f4f7fb);
+  font-size: 18px;
+  font-weight: 800;
+}
+.profile-menu-links {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+.profile-menu-links > a.profile-menu-link {
+  display: flex !important;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  min-height: 70px;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  border: 1px solid var(--border, rgba(255,255,255,.12));
+  border-radius: 16px;
+  background: var(--surface, #101722);
+  color: var(--text, #f4f7fb) !important;
+  text-decoration: none !important;
+  text-align: left;
+  box-shadow: 0 8px 22px rgba(0,0,0,.12);
+  transition: border-color .18s ease, background .18s ease, transform .18s ease;
+}
+.profile-menu-links > a.profile-menu-link:hover,
+.profile-menu-links > a.profile-menu-link:focus-visible {
+  border-color: rgba(59,130,246,.65);
+  background: var(--surface-2, #152236);
+  color: var(--text, #fff) !important;
+  text-decoration: none !important;
+}
+.profile-menu-links > a.profile-menu-link:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 3px;
+}
+.profile-menu-symbol {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  flex: 0 0 42px;
+  border-radius: 13px;
+  background: rgba(59,130,246,.13);
+  color: #75b4ff;
+  font-size: 21px;
+}
+.profile-menu-links > a.profile-menu-link > span:nth-child(2) {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.profile-menu-links > a.profile-menu-link strong {
+  display: block;
+  color: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+.profile-menu-links > a.profile-menu-link small {
+  display: block;
+  color: var(--muted, #9aa8ba);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+.profile-menu-arrow {
+  margin-left: auto;
+  padding-left: 8px;
+  color: var(--muted, #9aa8ba);
+  font-size: 26px;
+  line-height: 1;
+}
+.profile-menu-links > a.profile-menu-logout {
+  border-color: rgba(255,92,92,.25);
+}
+.profile-menu-links > a.profile-menu-logout .profile-menu-symbol {
+  background: rgba(255,92,92,.10);
+  color: #ff8585;
+}
+.profile-menu-links > a.profile-menu-logout strong {
+  color: #ff8585;
+}
+@media (max-width: 600px) {
+  .profile-menu-section { margin-top: 24px; }
+  .profile-menu-links { gap: 9px; }
+  .profile-menu-links > a.profile-menu-link { min-height: 66px; padding: 12px 13px; }
+}

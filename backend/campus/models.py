@@ -1,6 +1,7 @@
 # Creating models for our campus
 from django.contrib.auth.models import User
 from django.db import models
+from unimap_project.storage import BuildingMediaStorage
 
 
 #Kwanyise@
@@ -53,8 +54,8 @@ class Building(models.Model):
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="available")
     opening_hours = models.CharField(max_length=120, blank=True)
-    photo = models.ImageField(upload_to="buildings/photos/", blank=True, null=True)
-    icon = models.ImageField(upload_to="buildings/icons/", blank=True, null=True)
+    photo = models.ImageField(storage=BuildingMediaStorage(), upload_to="buildings/photos/", blank=True, null=True)
+    icon = models.ImageField(storage=BuildingMediaStorage(), upload_to="buildings/icons/", blank=True, null=True)
     geofence = models.JSONField(default=list, blank=True)
     
     university = models.ForeignKey(

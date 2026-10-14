@@ -1,18 +1,16 @@
-{% extends "base.html" %}{% block title %}UNIMAP — Free Halls{% endblock %}
+{% extends "base.html" %}
+{% block title %}UNIMAP — Find Free Halls{% endblock %}
 {% block content %}
-<div class="section-head"><div><div class="eyebrow">Campus spaces</div><h1>Find Free Halls</h1></div><button class="icon-btn" type="button" aria-label="Filter">{% include "partials/icon.html" with name="filter" %}</button></div>
-<div class="tabs"><button class="tab active">Near You</button><button class="tab">All Halls</button><button class="tab">By Building</button></div>
-<div id="hallList" class="list" style="margin-top:16px"><div class="card" style="padding:18px">Loading halls…</div></div>
-<script>
-(async()=>{
- const list=document.getElementById('hallList');
- try{
-  const r=await fetch('/api/academic/halls/?university={{ user.profile.university.short_name|default:""|escapejs }}');if(!r.ok)throw new Error();const rows=await r.json();
-  const label={available:'Available',in_use:'In Use',limited:'Limited',closed:'Closed'};
-  const badge={available:'badge-green',in_use:'badge-red',limited:'badge-yellow',closed:'badge-red'};
-  if(!rows.length){list.innerHTML='<div class="card" style="padding:20px"><strong>No halls found</strong><p class="muted" style="font-size:12px;margin:6px 0 0">Add lecture theatres/halls in the campus admin.</p></div>';return;}
-  list.innerHTML=rows.map(h=>`<div class="list-row"><div class="list-icon" style="color:#63a6ff">{% include "partials/icon.html" with name="halls" %}</div><div class="list-main"><div class="list-title">${h.name}</div><div class="list-sub">${h.category||'Hall'}${h.floor?' · '+h.floor:''}</div></div><div class="list-right"><span class="badge ${badge[h.status]||'badge-blue'}">${label[h.status]||h.status}</span><br>${h.capacity?'Capacity: '+h.capacity:''}${h.current_class?'<br>'+h.current_class:''}</div></div>`).join('');
- }catch(e){list.innerHTML='<div class="card" style="padding:20px"><strong>Could not load halls</strong><p class="muted" style="font-size:12px;margin:6px 0 0">Try again after checking the academic API.</p></div>';}
-})();
-</script>
+<section class="coming-soon-page" aria-labelledby="halls-title">
+  <div class="coming-soon-icon" aria-hidden="true">{% include "partials/icon.html" with name="halls" size=34 %}</div>
+  <div class="eyebrow">Campus spaces</div>
+  <h1 id="halls-title">Find Free Halls</h1>
+  <p class="muted coming-soon-intro">Find spaces for studying, meetings and group activities around your campus.</p>
+  <div class="coming-soon-card">
+    <span class="coming-soon-pill">Coming soon</span>
+    <h2>Hall availability is on the way</h2>
+    <p class="muted">We’re working on a better way to help you find and reserve halls. Until then, use the campus map to explore buildings around you.</p>
+    <a class="btn btn-primary" href="{% url 'campus-map' %}">{% include "partials/icon.html" with name="map" size=18 %} Explore Campus Map</a>
+  </div>
+</section>
 {% endblock %}

@@ -2,6 +2,7 @@ import re
 from django.contrib.auth.models import User
 from django.db import transaction
 from rest_framework import serializers
+from PIL import Image, UnidentifiedImageError
 from campus.models import University
 from .models import Profile, School, Department, Option
 
@@ -108,6 +109,22 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
+    def validate_profile_picture(self, value):
+        if value is None:
+            return value
+        if value.size > 5 * 1024 * 1024:
+            raise serializers.ValidationError("Image must be 5 MB or smaller.")
+        try:
+            value.seek(0)
+            image = Image.open(value)
+            image.verify()
+            if image.format not in {"JPEG", "PNG", "WEBP", "GIF"}:
+                raise serializers.ValidationError("Use a JPG, PNG, WEBP, or GIF image.")
+            value.seek(0)
+        except (UnidentifiedImageError, OSError, ValueError):
+            raise serializers.ValidationError("The uploaded file is not a valid image. Try saving it as JPG or PNG and upload again.")
+        return value
+
     class Meta:
         model = Profile
         fields = ["full_name","profile_picture","school","department","option","level","matric_number"]

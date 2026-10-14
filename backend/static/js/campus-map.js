@@ -163,13 +163,42 @@
   document.addEventListener('click',e=>{if(!e.target.closest('.map-search-row'))results.style.display='none'});
   document.querySelectorAll('.category-chip').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.category-chip').forEach(x=>x.classList.remove('active'));btn.classList.add('active');renderVisibleMarkers(btn.dataset.category)}));
 
-  function orientation(e){let h=null;if(typeof e.webkitCompassHeading==='number')h=e.webkitCompassHeading;else if(e.absolute&&e.alpha!==null)h=360-e.alpha;if(h===null)return;const d=((h-lastHeading+540)%360)-180;lastHeading=(lastHeading+d*.2+360)%360;const needle=document.querySelector('.compass-orb .needle');if(needle)needle.style.transform=`translateX(-50%) rotate(${lastHeading}deg)`}
-  async function startCompass(){if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function'){try{if(await DeviceOrientationEvent.requestPermission()!=='granted')return}catch{return}}window.addEventListener('deviceorientationabsolute',orientation,true);window.addEventListener('deviceorientation',orientation,true)}
+  let compassStarted=false;
+  function orientation(e){
+    let h=null;
+    if(typeof e.webkitCompassHeading==='number') h=e.webkitCompassHeading;
+    else if(e.absolute && e.alpha!==null) h=360-e.alpha;
+    else if(e.alpha!==null && e.alpha!==undefined) h=360-e.alpha;
+    if(h===null || !Number.isFinite(h)) return;
+    h=(h+360)%360;
+    const d=((h-lastHeading+540)%360)-180;
+    lastHeading=(lastHeading+d*.25+360)%360;
+    const needle=document.querySelector('.compass-orb .needle');
+    if(needle) needle.style.transform=`translateX(-50%) rotate(${lastHeading}deg)`;
+    const btn=$('compassBtn');
+    if(btn){btn.classList.add('compass-active');btn.setAttribute('aria-pressed','true');}
+  }
+  async function startCompass(){
+    if(compassStarted) return true;
+    if(!('DeviceOrientationEvent' in window)){toast('Compass sensors are not supported by this browser.');return false;}
+    if(typeof DeviceOrientationEvent.requestPermission==='function'){
+      try { if(await DeviceOrientationEvent.requestPermission()!=='granted'){toast('Allow motion/orientation access to use the compass.');return false;} }
+      catch(error){toast('Could not access compass sensors. Check browser permissions.');return false;}
+    }
+    window.addEventListener('deviceorientation',orientation,true);
+    window.addEventListener('deviceorientationabsolute',orientation,true);
+    compassStarted=true;
+    return true;
+  }
+  // Browsers such as iOS Safari require the sensor permission request to happen
+  // directly inside a user gesture. Start on the first map interaction as well
+  // as the dedicated compass control.
+  map.getContainer().addEventListener('pointerdown',()=>{startCompass();},{once:true,passive:true});
   function locate(){startCompass();map.locate({setView:false,watch:true,enableHighAccuracy:true,maximumAge:3000,timeout:15000})}
   map.on('locationfound',e=>{if(!userMarker){userMarker=L.marker(e.latlng,{interactive:false,icon:L.divIcon({className:'',html:'<div class="user-location"><div class="user-heading"></div></div>',iconSize:[18,18],iconAnchor:[9,9]})}).addTo(map);accuracyCircle=L.circle(e.latlng,{radius:Math.max(e.accuracy,25),color:'#4d9aff',fillColor:'#4d9aff',fillOpacity:.12,weight:1,interactive:false}).addTo(map)}else{userMarker.setLatLng(e.latlng);accuracyCircle.setLatLng(e.latlng);accuracyCircle.setRadius(Math.max(e.accuracy,25))}});
   map.on('locationerror',()=>toast('Location unavailable. Check GPS permissions.'));
   $('locateBtn').onclick=()=>{locate();if(userMarker)map.flyTo(userMarker.getLatLng(),18,{duration:.8});else toast('Finding your location…')};
-  $('compassBtn').onclick=()=>{startCompass();toast('Compass enabled')};
+  $('compassBtn').onclick=async()=>{const ok=await startCompass();if(ok)toast('Compass activated');};
   $('layersBtn').onclick=()=>{if(baseMode==='satellite'){map.removeLayer(satellite);darkTiles.addTo(map);baseMode='dark';toast('Dark map enabled')}else{map.removeLayer(darkTiles);satellite.addTo(map);baseMode='satellite';toast('Satellite map enabled')}};
 
   window.unimapSetStart=(lat,lng)=>{routeStart=L.latLng(lat,lng);toast('Start location set')};

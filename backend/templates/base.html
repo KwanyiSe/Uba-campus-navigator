@@ -23,26 +23,10 @@
     </a>
     <div class="header-actions">
       {% if user.is_authenticated %}
-      <div class="notification-menu" id="notificationMenu">
-        <button class="notification-bell" id="notificationBell" type="button"
-                aria-label="Notifications" title="Notifications"
-                aria-expanded="false" aria-controls="notificationDropdown">
+      <a class="notification-bell" id="notificationBell" href="{% url 'notifications' %}" aria-label="Notifications" title="Notifications">
           {% include "partials/icon.html" with name="bell" size=20 %}
           <span id="notificationBadge" class="notification-badge" hidden>0</span>
-        </button>
-        <section class="notification-dropdown" id="notificationDropdown" aria-label="Recent notifications" hidden>
-          <div class="notification-dropdown-heading">
-            <strong>Notifications</strong>
-            <button type="button" id="markAllNotificationsRead" class="notification-text-button">Mark all read</button>
-          </div>
-          <div id="notificationPreview" class="notification-preview">
-            <div class="empty-state">Open to load notifications…</div>
-          </div>
-          <a class="notification-view-all" href="{% url 'notifications' %}">View all notifications</a>
-        </section>
-      </div>
-      {% endif %}
-      <a class="icon-btn" href="{% url 'menu' %}" aria-label="Open menu">{% include "partials/icon.html" with name="menu" size=19 %}</a>
+      </a>
       <a class="avatar" href="{% url 'profile' %}">
         {% if user.is_authenticated and user.profile.profile_picture %}
           <img src="{{ user.profile.profile_picture.url }}" alt="Profile">
@@ -52,6 +36,7 @@
           {{ user.username|slice:":2"|upper }}
         {% endif %}
       </a>
+      {% endif %}
     </div>
   </header>
   <main class="container content">
@@ -81,134 +66,19 @@
 </nav>
 {% if user.is_authenticated %}
 <script>
-(function () {
-  const menu = document.getElementById("notificationMenu");
+(async function () {
   const bell = document.getElementById("notificationBell");
-  const panel = document.getElementById("notificationDropdown");
-  const preview = document.getElementById("notificationPreview");
   const badge = document.getElementById("notificationBadge");
-  const markAllButton = document.getElementById("markAllNotificationsRead");
-  if (!menu || !bell || !panel || !preview || !badge) return;
-
-  const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  })[char]);
-  const csrfToken = () => document.cookie.split("; ").find(row => row.startsWith("csrftoken="))?.split("=")[1] || "";
-  const safeInternalLink = value => {
-    const link = String(value || "").trim();
-    return link.startsWith("/") && !link.startsWith("//") ? link : "/notifications/";
-  };
-  let loaded = false;
-  let loading = false;
-
-  function updateBadge(count) {
-    const unread = Math.max(0, Number(count) || 0);
+  if (!bell || !badge) return;
+  try {
+    const response = await fetch("/api/academic/notifications/", { credentials: "same-origin" });
+    if (!response.ok) return;
+    const data = await response.json();
+    const unread = Math.max(0, Number(data.unread) || 0);
     badge.textContent = unread > 99 ? "99+" : String(unread);
     badge.hidden = unread === 0;
     bell.setAttribute("aria-label", unread ? `Notifications, ${unread} unread` : "Notifications");
-  }
-
-  function showMessage(message) {
-    preview.innerHTML = `<div class="empty-state">${escapeHtml(message)}</div>`;
-  }
-
-  async function loadNotifications() {
-    if (loading) return;
-    loading = true;
-    showMessage("Loading notifications…");
-    try {
-      const response = await fetch("/api/academic/notifications/", { credentials: "same-origin" });
-      if (!response.ok) throw new Error("Unable to load notifications.");
-      const data = await response.json();
-      updateBadge(data.unread);
-      const items = Array.isArray(data.notifications) ? data.notifications.slice(0, 5) : [];
-      if (!items.length) {
-        showMessage("You're all caught up. No notifications yet.");
-      } else {
-        preview.innerHTML = items.map(item => `
-          <a class="notification-preview-item ${item.read ? "read" : "unread"}"
-             href="${escapeHtml(safeInternalLink(item.link))}" data-notification-id="${Number(item.id)}">
-            <span class="notification-dot" aria-hidden="true"></span>
-            <span class="notification-preview-copy">
-              <strong>${escapeHtml(item.title)}</strong>
-              <span>${escapeHtml(item.body)}</span>
-              <small>${escapeHtml(item.created_at ? new Date(item.created_at).toLocaleString() : "")}</small>
-            </span>
-          </a>`).join("");
-      }
-      loaded = true;
-    } catch (error) {
-      showMessage("Notifications couldn't be loaded. Please try again.");
-    } finally {
-      loading = false;
-    }
-  }
-
-  async function markRead(ids) {
-    const response = await fetch("/api/academic/notifications/", {
-      method: "PATCH",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken() },
-      body: JSON.stringify(ids ? { ids } : {})
-    });
-    if (!response.ok) throw new Error("Unable to update notifications.");
-  }
-
-  bell.addEventListener("click", async () => {
-    const willOpen = panel.hidden;
-    panel.hidden = !willOpen;
-    bell.setAttribute("aria-expanded", String(willOpen));
-    if (willOpen && !loaded) await loadNotifications();
-    else if (willOpen) await loadNotifications();
-  });
-
-  preview.addEventListener("click", async event => {
-    const link = event.target.closest("a[data-notification-id]");
-    if (!link) return;
-    const id = Number(link.dataset.notificationId);
-    const destination = link.href;
-    const item = link;
-    if (item.classList.contains("unread") && id) {
-      event.preventDefault();
-      try {
-        await markRead([id]);
-        item.classList.remove("unread");
-        item.classList.add("read");
-        await loadNotifications();
-      } catch (error) {
-        // Navigation remains available even if marking as read fails.
-      }
-      window.location.assign(destination);
-    }
-  });
-
-  if (markAllButton) markAllButton.addEventListener("click", async () => {
-    markAllButton.disabled = true;
-    try {
-      await markRead();
-      await loadNotifications();
-    } catch (error) {
-      showMessage("Couldn't mark notifications as read. Please try again.");
-    } finally {
-      markAllButton.disabled = false;
-    }
-  });
-
-  document.addEventListener("click", event => {
-    if (!menu.contains(event.target)) {
-      panel.hidden = true;
-      bell.setAttribute("aria-expanded", "false");
-    }
-  });
-  document.addEventListener("keydown", event => {
-    if (event.key === "Escape") {
-      panel.hidden = true;
-      bell.setAttribute("aria-expanded", "false");
-      bell.focus();
-    }
-  });
-
-  loadNotifications();
+  } catch (_) { /* Keep direct navigation available if the count endpoint is unavailable. */ }
 })();
 </script>
 {% endif %}

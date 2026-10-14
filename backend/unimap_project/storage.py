@@ -38,3 +38,8 @@ class ProfileMediaStorage(SupabaseBaseStorage):
 
 class NewsMediaStorage(SupabaseBaseStorage):
     bucket_name = settings.SUPABASE_S3_NEWS_BUCKET
+
+
+class BuildingMediaStorage(SupabaseBaseStorage):
+    """Durable storage for campus building photos and icons."""
+    bucket_name = settings.SUPABASE_S3_BUILDINGS_BUCKET

@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.db import models
 from .models import Building, SiteVisit, DailyStats, University, CampusAdminUser
 from django.contrib.auth.models import User, Group
+from accounts.models import Profile
 from django.contrib.auth.admin import UserAdmin, GroupAdmin
 from django.contrib.admin.sites import AlreadyRegistered
 
@@ -71,6 +72,8 @@ def admin_index(request):
         return {
             "total_visitors": total_visitors,
             "visitors_today": visitors_today,
+            "registered_accounts": Profile.objects.filter(user__is_active=True).count(),
+            "registered_students": Profile.objects.filter(user__is_active=True, role="student").count(),
         }
 
     # campus admin only their university
@@ -90,9 +93,12 @@ def admin_index(request):
             total=models.Sum("visitors")
         )["total"] or 0
 
+        profiles = Profile.objects.filter(university=university, user__is_active=True)
         return {
             "total_visitors": total_visitors,
             "visitors_today": visitors_today,
+            "registered_accounts": profiles.count(),
+            "registered_students": profiles.filter(role="student").count(),
         }
 
     return {}
