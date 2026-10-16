@@ -1,5 +1,5 @@
 # UNIMAP Form B + Geofencing implementation
-
+..
 ## Form B flow
 1. Admin/School Admin creates an Academic Year and its two Semesters.
 2. CC selects Academic Year, Semester, Department, Option and Level.
