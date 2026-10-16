@@ -5,6 +5,19 @@
   const routeUrl = root.dataset.routeUrl;
   const activityUrl = root.dataset.activityUrl || '';
   const shortName = root.dataset.university || '';
+  const mapStateKey = `unimap:map-state:${shortName.toLowerCase() || 'default'}`;
+  let savedMapState = null;
+  try { savedMapState = JSON.parse(sessionStorage.getItem(mapStateKey) || 'null'); } catch { savedMapState = null; }
+  const saveMapState = () => {
+    try {
+      const center = map.getCenter();
+      sessionStorage.setItem(mapStateKey, JSON.stringify({
+        lat: center.lat, lng: center.lng, zoom: map.getZoom(),
+        category: document.querySelector('.category-chip.active')?.dataset.category || 'all',
+        search: document.getElementById('buildingSearch')?.value || ''
+      }));
+    } catch { /* Storage may be disabled; the map remains usable. */ }
+  };
   let boundary = [];
   try { boundary = JSON.parse(root.dataset.boundary || '[]'); } catch { boundary = []; }
 
@@ -68,6 +81,14 @@
     boundaryLayer.bringToFront();
   }else map.setView([5.96,10.16],17);
 
+  // Restore the previous map viewport after the default campus framing.
+  if (savedMapState && Number.isFinite(savedMapState.lat) && Number.isFinite(savedMapState.lng) && Number.isFinite(savedMapState.zoom)) {
+    map.setView([savedMapState.lat, savedMapState.lng], savedMapState.zoom, { animate: false });
+  }
+  map.on('moveend zoomend', saveMapState);
+  window.addEventListener('pagehide', saveMapState);
+  window.addEventListener('pageshow', () => { setTimeout(() => map.invalidateSize({ pan: false }), 0); });
+
   function openPlace(b){
     selectedBuilding=b;
     const info=categoryInfo(b.category);
@@ -116,7 +137,11 @@
     .then(data=>{
       buildings=data.map(b=>({...b,_category:categoryInfo(b.category)}));
       buildings.forEach(b=>{const m=L.marker([b.latitude,b.longitude],{icon:markerIcon(b)});m.on('click',()=>openPlace(b));b.marker=m;cluster.addLayer(m)});
-      renderVisibleMarkers('all');
+      const initialCategory = savedMapState?.category || 'all';
+      document.querySelectorAll('.category-chip').forEach(button => button.classList.toggle('active', button.dataset.category === initialCategory));
+      if (input && savedMapState?.search) input.value = savedMapState.search;
+      renderVisibleMarkers(initialCategory);
+      if (input && input.value.trim()) renderResults(input.value.trim().toLowerCase());
       updateActivity();
       loadRealActivities();
     }).catch(()=>toast('Could not load campus places'));
@@ -158,10 +183,10 @@
     results.style.display=found.length?'block':'none';
     results.querySelectorAll('.search-result').forEach(el=>el.onclick=()=>{const b=buildings.find(x=>String(x.id)===el.dataset.id);if(b)focusBuilding(b)});
   }
-  input.addEventListener('input',()=>renderResults(input.value.trim().toLowerCase()));
+  input.addEventListener('input',()=>{renderResults(input.value.trim().toLowerCase());saveMapState()});
   input.addEventListener('keydown',e=>{if(e.key==='Enter'){const q=input.value.trim().toLowerCase();const b=buildings.find(x=>(x.name||'').toLowerCase()===q)||buildings.find(x=>(x.name||'').toLowerCase().includes(q));if(b)focusBuilding(b);else toast('Place not found')}});
   document.addEventListener('click',e=>{if(!e.target.closest('.map-search-row'))results.style.display='none'});
-  document.querySelectorAll('.category-chip').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.category-chip').forEach(x=>x.classList.remove('active'));btn.classList.add('active');renderVisibleMarkers(btn.dataset.category)}));
+  document.querySelectorAll('.category-chip').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.category-chip').forEach(x=>x.classList.remove('active'));btn.classList.add('active');renderVisibleMarkers(btn.dataset.category);saveMapState()}));
 
   let compassStarted=false;
   let targetHeading=null;

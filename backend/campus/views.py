@@ -3,6 +3,7 @@ from rest_framework import generics
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.core.cache import cache
+from django.utils.cache import patch_vary_headers
 from .models import Building, University
 from .serializers import BuildingSerializer
 from unimap_project import settings
@@ -24,20 +25,33 @@ class BuildingList(generics.ListAPIView):
     """
 
     serializer_class = BuildingSerializer
+    cache_timeout = 300
 
     def get_queryset(self):
-        # Start with all buildings
-        qs = Building.objects.all()
-
-        # Get the 'university' parameter from the URL query string
-        uni_short = self.request.GET.get("university")
-
+        qs = Building.objects.select_related("university").all()
+        uni_short = (self.request.query_params.get("university") or "").strip()
         if uni_short:
-            # Filter buildings by university short_name
-            # __iexact → case-insensitive match
             qs = qs.filter(university__short_name__iexact=uni_short)
+        return qs.order_by("id")
 
-        return qs
+    def list(self, request, *args, **kwargs):
+        # The serializer may return absolute media URLs, so include the host in
+        # the cache key. A version token lets model signals invalidate all old
+        # building payloads without flushing unrelated route-cache entries.
+        uni_short = (request.query_params.get("university") or "").strip().casefold()
+        version = cache.get("campus:building_cache_version", 1)
+        cache_key = f"campus:buildings:v{version}:{request.get_host().lower()}:{uni_short or 'all'}"
+        payload = cache.get(cache_key)
+        if payload is None:
+            queryset = self.filter_queryset(self.get_queryset())
+            payload = self.get_serializer(queryset, many=True).data
+            # Store plain JSON-compatible data, not a DRF Response object.
+            payload = list(payload)
+            cache.set(cache_key, payload, self.cache_timeout)
+        response = Response(payload)
+        patch_vary_headers(response, ("Host",))
+        response["Cache-Control"] = "public, max-age=60"
+        return response
 
 # Campus map view
 def campus_map(request, short_name=None):
@@ -127,15 +141,22 @@ def get_route(request):
     if not start or not end:
         return Response({"error": "start and end parameters required"}, status=400)
 
-    cache_key = f"route_{start}_{end}"
-    cached = cache.get(cache_key)
-    if cached:
-        return Response(cached)
-
     try:
         start_lat, start_lng = map(float, start.split(","))
         end_lat, end_lng = map(float, end.split(","))
+        values = (start_lat, start_lng, end_lat, end_lng)
+        if not all(-90 <= values[i] <= 90 for i in (0, 2)) or not all(-180 <= values[i] <= 180 for i in (1, 3)):
+            return Response({"error": "Coordinates are outside valid latitude/longitude ranges."}, status=400)
+        # GPS readings with tiny floating-point differences should reuse a route.
+        normalized = tuple(round(value, 5) for value in values)
+        cache_key = "route:v2:" + ":".join(f"{value:.5f}" for value in normalized)
+        cached = cache.get(cache_key)
+        if cached is not None:
+            response = Response(cached)
+            response["Cache-Control"] = "private, max-age=60"
+            return response
 
+        start_lat, start_lng, end_lat, end_lng = normalized
         payload = {
             "coordinates": [
                 [start_lng, start_lat],
@@ -148,7 +169,7 @@ def get_route(request):
             "Content-Type": "application/json"
         }
 
-        ors_response = requests.post(ORS_URL, json=payload, headers=headers)
+        ors_response = requests.post(ORS_URL, json=payload, headers=headers, timeout=(4, 12))
         ors_response.raise_for_status()  # auto-throws exception on non-200
 
         data = ors_response.json()
@@ -166,11 +187,17 @@ def get_route(request):
             "duration": format_duration(summary["duration"])
         }
 
-        cache.set(cache_key, result, 600)  # cache 10 minutes
-        return Response(result)
+        cache.set(cache_key, result, 600)  # successful route results only; 10 minutes
+        response = Response(result)
+        response["Cache-Control"] = "private, max-age=60"
+        return response
 
-    except Exception as e:
-        return Response({"error": str(e)}, status=500)
+    except (TypeError, ValueError):
+        return Response({"error": "Coordinates must be supplied as lat,lng pairs."}, status=400)
+    except requests.RequestException:
+        return Response({"error": "The routing service is temporarily unavailable. Please try again."}, status=502)
+    except (KeyError, IndexError, TypeError, ValueError):
+        return Response({"error": "The routing service returned an invalid route."}, status=502)
 
 
 # Helper

@@ -123,10 +123,10 @@
   <div class="splash-progress"><span></span></div>
 </div>
 {% endif %}
-<script src="{% static 'js/campus-map.js' %}?v=20261016-apple-compass"></script>
+<script src="{% static 'js/campus-map.js' %}?v=20261016-cache-state-compass"></script>
 <script>
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register("{% static 'pwa/service-worker.js' %}").catch(console.error));
+  window.addEventListener('load', () => navigator.serviceWorker.register("{% static 'pwa/service-worker.js' %}?v=20261016-cache-policy").catch(console.error));
 }
 </script>
 </body>
