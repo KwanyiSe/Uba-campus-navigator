@@ -1,4 +1,5 @@
-(() => {
+function initUnimapMap() {
+  if (window.__unimapMapCleanup) return;
   const root = document.getElementById('unimap-map-app');
   if (!root) return;
   const apiUrl = root.dataset.apiUrl;
@@ -8,6 +9,31 @@
   const mapStateKey = `unimap:map-state:${shortName.toLowerCase() || 'default'}`;
   let savedMapState = null;
   try { savedMapState = JSON.parse(sessionStorage.getItem(mapStateKey) || 'null'); } catch { savedMapState = null; }
+  const fetchPublicJsonCached = async (url, key, ttlMs = 120000) => {
+    let cached = null;
+    try { cached = JSON.parse(sessionStorage.getItem(key) || 'null'); } catch (_) {}
+    const fresh = cached && Array.isArray(cached.data) && (Date.now() - cached.savedAt) < ttlMs;
+    const request = async () => {
+      const response = await fetch(url, { credentials: 'same-origin' });
+      if (!response.ok) throw new Error(`Request failed (${response.status})`);
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        try { sessionStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), data })); } catch (_) {}
+      }
+      return data;
+    };
+    if (fresh) {
+      // Return immediately for a fast revisit and refresh the cache for next time.
+      request().catch(() => {});
+      return cached.data;
+    }
+    try { return await request(); }
+    catch (error) {
+      // Brief offline fallback for public map data only; never used for user or attendance data.
+      if (cached && Array.isArray(cached.data) && Date.now() - cached.savedAt < 15 * 60 * 1000) return cached.data;
+      throw error;
+    }
+  };
   const saveMapState = () => {
     try {
       const center = map.getCenter();
@@ -25,6 +51,11 @@
     zoomControl:false, attributionControl:false, minZoom:15, maxZoom:20,
     zoomSnap:.5, bounceAtZoomLimits:false, maxBoundsViscosity:1.0
   });
+  window.__unimapMapCleanup = () => {
+    try { saveMapState(); } catch (_) {}
+    try { map.remove(); } catch (_) {}
+    window.__unimapMapCleanup = null;
+  };
   map.createPane('campusMask');
   map.getPane('campusMask').style.zIndex = 350;
   map.getPane('campusMask').classList.add('campus-mask-pane');
@@ -132,8 +163,7 @@
     }
   }
 
-  fetch(`${apiUrl}?university=${encodeURIComponent(shortName)}`)
-    .then(r=>{if(!r.ok)throw new Error();return r.json()})
+  fetchPublicJsonCached(`${apiUrl}?university=${encodeURIComponent(shortName)}`, `unimap:public-buildings:${shortName.toLowerCase() || 'default'}`)
     .then(data=>{
       buildings=data.map(b=>({...b,_category:categoryInfo(b.category)}));
       buildings.forEach(b=>{const m=L.marker([b.latitude,b.longitude],{icon:markerIcon(b)});m.on('click',()=>openPlace(b));b.marker=m;cluster.addLayer(m)});
@@ -165,7 +195,7 @@
   }
   async function loadRealActivities(){
     if(!activityUrl)return;
-    try{const r=await fetch(`${activityUrl}?university=${encodeURIComponent(shortName)}`);if(!r.ok)throw new Error();const data=await r.json();if(Array.isArray(data)&&data.length)showActivityItems(data);}catch{/* fallback stays visible */}
+    try{const data=await fetchPublicJsonCached(`${activityUrl}?university=${encodeURIComponent(shortName)}`, `unimap:public-activities:${shortName.toLowerCase() || 'default'}`, 60000);if(Array.isArray(data)&&data.length)showActivityItems(data);}catch{/* fallback stays visible */}
   }
 
   const input=$('buildingSearch'),results=$('searchResults');
@@ -344,4 +374,15 @@
   const splash=$('unimapSplash');
   if(splash){setTimeout(()=>splash.classList.add('hide'),1550);setTimeout(()=>splash.remove(),2050)}
   setTimeout(locate,700);window.addEventListener('resize',()=>map.invalidateSize({animate:false}));
-})();
+ }
+
+if (!window.__unimapMapLifecycleBound) {
+  window.__unimapMapLifecycleBound = true;
+  document.addEventListener('turbo:before-cache', () => {
+    if (window.__unimapMapCleanup) window.__unimapMapCleanup();
+  });
+  document.addEventListener('turbo:load', () => {
+    if (document.getElementById('unimap-map-app') && !window.__unimapMapCleanup) initUnimapMap();
+  });
+  if (!window.Turbo) initUnimapMap();
+}
