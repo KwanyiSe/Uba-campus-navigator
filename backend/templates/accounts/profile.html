@@ -162,61 +162,15 @@
 
     </div>
 
-<!-- ACCOUNT & SUPPORT (inline styled) -->
-<section aria-labelledby="profile-menu-title" style="margin-top:32px;">
-
-    <h2 id="profile-menu-title" style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#6b7280;margin:0 0 12px;padding-left:4px;">
-        Account &amp; support
-    </h2>
-
-    <div style="display:flex;flex-direction:column;gap:8px;">
-
-        <!-- Settings -->
-        <a href="{% url 'profile_edit' %}"
-           style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#111827;border:1px solid rgba(255,255,255,0.06);border-radius:14px;text-decoration:none;color:#e6eef8;transition:background 0.15s ease;">
-            <span style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:rgba(0,122,255,0.15);border-radius:10px;font-size:16px;color:#3b82f6;flex-shrink:0;">⚙</span>
-            <span style="flex:1;">
-                <strong style="display:block;font-size:15px;font-weight:600;color:#ffffff;">Settings</strong>
-                <small style="display:block;font-size:12px;color:#9ca3af;margin-top:2px;">Update your profile and account details</small>
-            </span>
-            <span style="font-size:20px;color:#6b7280;flex-shrink:0;">›</span>
-        </a>
-
-        <!-- My Feedback -->
-        <a href="{% url 'feedback' %}"
-           style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#111827;border:1px solid rgba(255,255,255,0.06);border-radius:14px;text-decoration:none;color:#e6eef8;transition:background 0.15s ease;">
-            <span style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:rgba(0,122,255,0.15);border-radius:10px;font-size:16px;color:#3b82f6;flex-shrink:0;">✉</span>
-            <span style="flex:1;">
-                <strong style="display:block;font-size:15px;font-weight:600;color:#ffffff;">My Feedback</strong>
-                <small style="display:block;font-size:12px;color:#9ca3af;margin-top:2px;">Send feedback and review your submissions</small>
-            </span>
-            <span style="font-size:20px;color:#6b7280;flex-shrink:0;">›</span>
-        </a>
-
-        <!-- About UNIMAP -->
-        <a href="{% url 'about' %}"
-           style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#111827;border:1px solid rgba(255,255,255,0.06);border-radius:14px;text-decoration:none;color:#e6eef8;transition:background 0.15s ease;">
-            <span style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:rgba(0,122,255,0.15);border-radius:10px;font-size:16px;color:#3b82f6;flex-shrink:0;">ⓘ</span>
-            <span style="flex:1;">
-                <strong style="display:block;font-size:15px;font-weight:600;color:#ffffff;">About UNIMAP</strong>
-                <small style="display:block;font-size:12px;color:#9ca3af;margin-top:2px;">Learn more about the campus platform</small>
-            </span>
-            <span style="font-size:20px;color:#6b7280;flex-shrink:0;">›</span>
-        </a>
-
-        <!-- Logout -->
-        <a href="{% url 'logout' %}"
-           style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#111827;border:1px solid rgba(220,38,38,0.25);border-radius:14px;text-decoration:none;color:#e6eef8;transition:background 0.15s ease;">
-            <span style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:rgba(220,38,38,0.15);border-radius:10px;font-size:16px;color:#ef4444;flex-shrink:0;">↪</span>
-            <span style="flex:1;">
-                <strong style="display:block;font-size:15px;font-weight:600;color:#ef4444;">Log out</strong>
-                <small style="display:block;font-size:12px;color:#9ca3af;margin-top:2px;">Sign out of your account</small>
-            </span>
-            <span style="font-size:20px;color:#6b7280;flex-shrink:0;">›</span>
-        </a>
-
-    </div>
-</section>
+    <section class="profile-menu-section" aria-labelledby="profile-menu-title">
+        <h2 id="profile-menu-title">Account &amp; support</h2>
+        <div class="profile-menu-links">
+            <a class="profile-menu-link" href="{% url 'profile_edit' %}"><span class="profile-menu-symbol" aria-hidden="true">⚙</span><span><strong>Settings</strong><small>Update your profile and account details</small></span><span class="profile-menu-arrow" aria-hidden="true">›</span></a>
+            <a class="profile-menu-link" href="{% url 'feedback' %}"><span class="profile-menu-symbol" aria-hidden="true">✉</span><span><strong>My Feedback</strong><small>Send feedback and review your submissions</small></span><span class="profile-menu-arrow" aria-hidden="true">›</span></a>
+            <a class="profile-menu-link" href="{% url 'about' %}"><span class="profile-menu-symbol" aria-hidden="true">ⓘ</span><span><strong>About UNIMAP</strong><small>Learn more about the campus platform</small></span><span class="profile-menu-arrow" aria-hidden="true">›</span></a>
+            <a class="profile-menu-link profile-menu-logout" href="{% url 'logout' %}"><span class="profile-menu-symbol" aria-hidden="true">↪</span><span><strong>Log out</strong><small>Sign out of your account</small></span><span class="profile-menu-arrow" aria-hidden="true">›</span></a>
+        </div>
+    </section>
 
 </div>
 

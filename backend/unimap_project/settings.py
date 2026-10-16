@@ -23,7 +23,6 @@ SECRET_KEY = config("SECRET_KEY")
 
 ORS_KEY = config("ORS_KEY")
 
-#kwanyi@@
 DEBUG = False
 
 ALLOWED_HOSTS = [

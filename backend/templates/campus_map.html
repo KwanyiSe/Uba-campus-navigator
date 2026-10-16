@@ -123,7 +123,7 @@
   <div class="splash-progress"><span></span></div>
 </div>
 {% endif %}
-<script src="{% static 'js/campus-map.js' %}"></script>
+<script src="{% static 'js/campus-map.js' %}?v=20261016-apple-compass"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register("{% static 'pwa/service-worker.js' %}").catch(console.error));

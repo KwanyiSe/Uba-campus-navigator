@@ -5,7 +5,7 @@
   <div>
     <div class="eyebrow">ACADEMIC</div>
     <h1>Classes</h1>
-    <p class="muted">Actual class created by ur class coordinator.</p>
+    <p class="muted">Actual class sessions are the source of truth for attendance.</p>
   </div>
   {% if profile.role == "cc" %}
     <a class="primary-btn" href="{% url 'class-management' %}">+ Create Class</a>
@@ -49,7 +49,7 @@
         <span>${x.session_date||""} · ${x.start_time||""}–${x.end_time||""}</span>
         ${action}
       </a>`;
-    }).join(""):'<div class="card muted">No Current class! youll get notify as soon as ur CC anounce a class.</div>';
+    }).join(""):'<div class="card muted">No classes found for your current scope.</div>';
   }catch(e){ target.innerHTML=`<div class="card error-card">${e.message}</div>`; }
 })();
 </script>

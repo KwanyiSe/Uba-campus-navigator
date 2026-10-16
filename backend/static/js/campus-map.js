@@ -164,17 +164,64 @@
   document.querySelectorAll('.category-chip').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.category-chip').forEach(x=>x.classList.remove('active'));btn.classList.add('active');renderVisibleMarkers(btn.dataset.category)}));
 
   let compassStarted=false;
+  let targetHeading=null;
+  let headingAnimationFrame=null;
+  let headingFrameTime=0;
+  let lastSensorHeading=null;
+
+  // Animate the shortest angular path, so 359° -> 1° turns smoothly through
+  // north rather than spinning almost a full circle. The time-based easing is
+  // independent of the sensor event rate and works well on 60/120 Hz screens.
+  function renderHeadingFrame(timestamp){
+    if(targetHeading===null) { headingAnimationFrame=null; return; }
+    const elapsed=headingFrameTime ? Math.min(timestamp-headingFrameTime,50) : 16.7;
+    headingFrameTime=timestamp;
+    const delta=((targetHeading-lastHeading+540)%360)-180;
+    // A small deadband suppresses sensor chatter; exponential easing avoids
+    // the uneven movement caused by applying a fixed fraction per sensor event.
+    if(Math.abs(delta)<0.35){
+      lastHeading=targetHeading;
+    }else{
+      const blend=1-Math.exp(-elapsed/105);
+      lastHeading=(lastHeading+delta*blend+360)%360;
+    }
+    const shownHeading=((lastHeading%360)+360)%360;
+    const rotation=`translateX(-50%) rotate(${shownHeading}deg)`;
+    const needle=document.querySelector('.compass-orb .needle');
+    if(needle) needle.style.transform=rotation;
+    const userHeading=document.querySelector('.user-heading');
+    if(userHeading) userHeading.style.transform=rotation;
+    const markerRoot=document.querySelector('.user-location');
+    if(markerRoot) markerRoot.dataset.heading=String(Math.round(shownHeading));
+    if(Math.abs(((targetHeading-lastHeading+540)%360)-180)>0.35){
+      headingAnimationFrame=requestAnimationFrame(renderHeadingFrame);
+    }else{
+      lastHeading=targetHeading;
+      headingFrameTime=0;
+      headingAnimationFrame=null;
+    }
+  }
+
   function orientation(e){
     let h=null;
-    if(typeof e.webkitCompassHeading==='number') h=e.webkitCompassHeading;
-    else if(e.absolute && e.alpha!==null) h=360-e.alpha;
+    if(typeof e.webkitCompassHeading==='number' && Number.isFinite(e.webkitCompassHeading)) h=e.webkitCompassHeading;
+    else if(e.absolute && e.alpha!==null && e.alpha!==undefined) h=360-e.alpha;
     else if(e.alpha!==null && e.alpha!==undefined) h=360-e.alpha;
     if(h===null || !Number.isFinite(h)) return;
-    h=(h+360)%360;
-    const d=((h-lastHeading+540)%360)-180;
-    lastHeading=(lastHeading+d*.25+360)%360;
-    const needle=document.querySelector('.compass-orb .needle');
-    if(needle) needle.style.transform=`translateX(-50%) rotate(${lastHeading}deg)`;
+    h=((h%360)+360)%360;
+
+    // Ignore tiny sensor fluctuations while still responding immediately to
+    // meaningful turns. Compare angles circularly so north crossing is stable.
+    if(lastSensorHeading!==null){
+      const sensorDelta=((h-lastSensorHeading+540)%360)-180;
+      if(Math.abs(sensorDelta)<0.25) return;
+    }
+    lastSensorHeading=h;
+    targetHeading=h;
+    if(headingAnimationFrame===null){
+      headingFrameTime=0;
+      headingAnimationFrame=requestAnimationFrame(renderHeadingFrame);
+    }
     const btn=$('compassBtn');
     if(btn){btn.classList.add('compass-active');btn.setAttribute('aria-pressed','true');}
   }
