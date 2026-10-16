@@ -256,32 +256,4 @@
   display: block;
   object-fit: cover;
   border-radius: 50%;
-  }
-/* =========================================================
-   UNIMAP — USER LOCATION DIRECTION ARROW
-========================================================= */
-
-.user-location {
-    position: relative;
-}
-
-.user-location .user-heading {
-    position: absolute;
-    left: 50%;
-    top: -12px;
-
-    width: 0;
-    height: 0;
-
-    border-left: 7px solid transparent;
-    border-right: 7px solid transparent;
-    border-bottom: 15px solid #1683ff;
-
-    transform: translateX(-50%);
-    transform-origin: 50% 100%;
-
-    transition: transform 0.2s ease-out;
-
-    pointer-events: none;
-    z-index: 2;
 }
