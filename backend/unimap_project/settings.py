@@ -23,7 +23,7 @@ SECRET_KEY = config("SECRET_KEY")
 
 ORS_KEY = config("ORS_KEY")
 
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     'localhost',
@@ -116,28 +116,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'unimap_project.wsgi.application'
-
-# Cache configuration: use Django's built-in Redis backend when REDIS_URL is
-# configured in the deployment environment. Without Redis, use per-process
-# memory caching (suitable for local development; not shared across Render workers).
-REDIS_URL = config("REDIS_URL", default="").strip()
-if REDIS_URL:
-    CACHES = {
-        "default": {
-            "BACKEND": "django.core.cache.backends.redis.RedisCache",
-            "LOCATION": REDIS_URL,
-            "KEY_PREFIX": "unimap",
-            "TIMEOUT": 300,
-        }
-    }
-else:
-    CACHES = {
-        "default": {
-            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-            "LOCATION": "unimap-default-cache",
-            "TIMEOUT": 300,
-        }
-    }
 
 
 # ==================== DATABASE CONFIGURATION ====================

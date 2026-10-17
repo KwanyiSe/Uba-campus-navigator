@@ -14,7 +14,6 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css">
-<script src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@8.0.12/dist/turbo.es2017-umd.js" defer></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 </head>
@@ -124,12 +123,11 @@
   <div class="splash-progress"><span></span></div>
 </div>
 {% endif %}
-<script src="{% static 'js/campus-map.js' %}?v=20261016-cache-state-compass"></script>
+<script src="{% static 'js/campus-map.js' %}?v=20261016-apple-compass"></script>
 <script>
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register("{% static 'pwa/service-worker.js' %}?v=20261016-cache-policy").catch(console.error));
+  window.addEventListener('load', () => navigator.serviceWorker.register("{% static 'pwa/service-worker.js' %}").catch(console.error));
 }
 </script>
-  <script src="{% static 'js/page-navigation-cache.js' %}?v=20261016-page-cache-1" defer></script>
 </body>
 </html>
