@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="{% static 'css/cc.css' %}">
   <link rel="stylesheet" href="{% static 'css/notifications.css' %}">
   {% block extra_head %}{% endblock %}
+  <script src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@8.0.12/dist/turbo.es2017-umd.js" defer></script>
 </head>
 <body>
 <div hidden aria-hidden="true" id="csrf-token-container">{% csrf_token %}</div>
@@ -82,5 +83,6 @@
 })();
 </script>
 {% endif %}
+  <script src="{% static 'js/page-navigation-cache.js' %}?v=20261016-page-cache-1" defer></script>
 </body>
 </html>

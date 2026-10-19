@@ -101,7 +101,7 @@ class ClassSessionListView(generics.ListAPIView):
     serializer_class=ClassSessionSerializer; permission_classes=[AllowAny]
     def get_queryset(self):
         expire_due_class_sessions()
-        qsClassSession.objects.filter(active=True).select_related("course","building","option")
+        qs = ClassSession.objects.filter(active=True).select_related("course", "building", "option")
         uni=self.request.GET.get("university")
         return qs.filter(course__university__short_name__iexact=uni) if uni else qs
 

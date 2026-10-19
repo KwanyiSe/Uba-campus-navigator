@@ -1,6 +1,5 @@
-const CACHE_NAME = "unimap-v5-compass-fix";
+const CACHE_NAME = "unimap-static-v5";
 const APP_SHELL = [
-  "/map/",
   "/static/css/shared.css",
   "/static/css/campus-map.css",
   "/static/js/campus-map.js",
@@ -30,25 +29,26 @@ self.addEventListener("fetch", event => {
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin) return;
-
-  // Never cache authenticated pages, API responses, or dynamic user data.
-  const isStaticAsset = url.pathname.startsWith("/static/");
-  const isMapPage = request.mode === "navigate" && url.pathname === "/map/";
-  if (!isStaticAsset && !isMapPage) return;
+  // Never cache API responses, pages, authentication, profiles, notifications,
+  // classes, or attendance. Those must always reflect current server state.
+  if (url.origin !== self.location.origin || !url.pathname.startsWith("/static/")) return;
 
   event.respondWith((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    const cached = await cache.match(request);
+    if (cached) {
+      // Refresh in the background so the next visit gets current static assets.
+      event.waitUntil(fetch(request).then(response => {
+        if (response.ok) return cache.put(request, response.clone());
+      }).catch(() => {}));
+      return cached;
+    }
     try {
-      const response = await fetch(request, { cache: "no-cache" });
-      if (response && response.ok) {
-        const cache = await caches.open(CACHE_NAME);
-        await cache.put(request, response.clone());
-      }
+      const response = await fetch(request);
+      if (response.ok && response.type === "basic") await cache.put(request, response.clone());
       return response;
     } catch (error) {
-      const cached = await caches.match(request);
-      if (cached) return cached;
-      throw error;
+      return new Response("This resource is unavailable offline.", { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } });
     }
   })());
 });
