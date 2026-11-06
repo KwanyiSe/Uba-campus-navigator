@@ -6,13 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#07111f">
   <title>{% block title %}UNIMAP{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'css/shared.css' %}">
-  <link rel="stylesheet" href="{% static 'css/unimap.css' %}">
-  <link rel="stylesheet" href="{% static 'css/accounts.css' %}">
+  <link rel="stylesheet" href="{% static 'css/shared.css' %}?v=20261106-scroll-perf-2">
+  <link rel="stylesheet" href="{% static 'css/unimap.css' %}?v=20261106-scroll-perf-2">
+  <link rel="stylesheet" href="{% static 'css/accounts.css' %}?v=20261106-scroll-perf-2">
   <link rel="stylesheet" href="{% static 'css/cc.css' %}">
   <link rel="stylesheet" href="{% static 'css/notifications.css' %}">
   {% block extra_head %}{% endblock %}
-  <script src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@8.0.12/dist/turbo.es2017-umd.js" defer></script>
 </head>
 <body>
 <div hidden aria-hidden="true" id="csrf-token-container">{% csrf_token %}</div>
@@ -83,6 +82,5 @@
 })();
 </script>
 {% endif %}
-  <script src="{% static 'js/page-navigation-cache.js' %}?v=20261016-page-cache-1" defer></script>
 </body>
 </html>

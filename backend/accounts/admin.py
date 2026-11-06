@@ -15,6 +15,13 @@ class ProfileAdmin(admin.ModelAdmin):
     list_display=("user","full_name","university","school","department","option","role","matric_number","level")
     search_fields=("user__username","user__email","full_name","matric_number")
     inlines = [ClassCoordinatorAssignmentInline]
+    # Fetch related objects in the same query for the Profile changelist.
+    list_select_related = ("user", "university", "school", "department", "option")
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            "user", "university", "school", "department", "option"
+        )
 
 @admin.register(School, site=campus_admin_site)
 class SchoolAdmin(admin.ModelAdmin):

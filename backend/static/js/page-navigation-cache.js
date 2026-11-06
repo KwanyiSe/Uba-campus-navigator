@@ -6,7 +6,10 @@
   // Keep the browser's own back/forward cache enabled and restore scroll on snapshots.
   if (window.Turbo) {
     window.Turbo.session.drive = true;
-    window.Turbo.config.cache = true;
+    // Do not restore snapshots containing transient body/html state (for example
+    // overflow:hidden left behind by a modal). Navigation still uses Turbo; each
+    // visit fetches a fresh page. The browser's normal back/forward cache remains.
+    window.Turbo.config.cache = false;
     window.Turbo.setProgressBarDelay(120);
   }
 

@@ -1153,3 +1153,19 @@ h2{font-size:20px;letter-spacing:-.02em}
 .profile-menu-logout{border-color:rgba(255,92,92,.2)}
 .profile-menu-logout .profile-menu-symbol,.profile-menu-logout strong{color:#ff7777}
 @media(max-width:600px){.app-header{height:64px;padding:0 14px}.brand{gap:8px;font-size:20px}.brand img{width:32px;height:32px}.header-actions{gap:9px}.notification-bell{width:42px;height:42px;flex-basis:42px;border-radius:14px}.avatar{width:38px;height:38px;min-width:38px;min-height:38px;flex-basis:38px}.content{padding-top:20px}.coming-soon-card{padding:21px}.profile-menu-link{padding:13px}.profile-menu-link small{line-height:1.4}}
+
+
+/* Baseline document scrolling; overlays can still lock scrolling while open. */
+html { overflow-y: auto; }
+
+
+/* UNIMAP global scroll recovery (2026-11-06).
+   Normal application pages must use the document as the vertical scroll container.
+   Modal classes below remain the only intentional body scroll locks. */
+html { min-height: 100%; overflow-x: hidden; overflow-y: auto; }
+body { min-height: 100vh; overflow-x: hidden; overflow-y: visible; }
+body:not(.news-viewer-open):not(.news-profile-open):not(.news-composer-open):not(.news-modal-open):not(.profile-picture-viewer-open) {
+  overflow-y: visible !important;
+}
+.page-shell { min-height: 100vh; height: auto; overflow: visible; }
+main.content { min-height: 1px; overflow: visible; padding-bottom: 96px; }

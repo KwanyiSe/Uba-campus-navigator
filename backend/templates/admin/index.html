@@ -1,37 +1,53 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
 
-{% extends "admin/index.html" %}
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    /* The document, not an inner panel, remains the page scroll container. */
+    html, body { min-height: 100% !important; height: auto !important; overflow-y: auto !important; }
+    body { position: static !important; }
+    #container, #content, #content-main { height: auto !important; min-height: 0; overflow: visible !important; }
+    .unimap-admin-stats { margin: 0 0 24px; padding: 18px 20px; border: 1px solid var(--hairline-color, #ddd); border-radius: 8px; background: var(--darkened-bg, #f8f8f8); }
+    .unimap-admin-stats h2 { margin-top: 0; }
+    .unimap-admin-apps { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+    .unimap-admin-app { min-width: 0; }
+  </style>
+{% endblock %}
 
 {% block content %}
+<div id="content-main">
+  {% if total_visitors is not None or registered_accounts is not None %}
+  <section class="unimap-admin-stats">
+    <h2>{% translate "Site Statistics" %}</h2>
+    <ul>
+      <li><strong>{% translate "Total Visitors" %}:</strong> {{ total_visitors|default:"0" }}</li>
+      <li><strong>{% translate "Visitors Today" %}:</strong> {{ visitors_today|default:"0" }}</li>
+      <li><strong>{% translate "Registered Accounts" %}:</strong> {{ registered_accounts|default:"0" }}</li>
+      <li><strong>{% translate "Registered Students" %}:</strong> {{ registered_students|default:"0" }}</li>
+    </ul>
+    <small>Visitor counts are browser-session estimates. Registered accounts and students are active profile records.</small>
+  </section>
+  {% endif %}
 
-<!-- ===== Site Statistics ===== -->
-<div class="dashboard-module" style="margin-bottom: 20px;">
-  <h2>Site Statistics</h2>
-
-  <ul style="list-style: none; padding-left: 0;">
-    <li>
-      <strong>Total Visitors:</strong>
-      {{ total_visitors|default:"0" }}
-    </li>
-    <li>
-      <strong>Visitors Today:</strong>
-      {{ visitors_today|default:"0" }}
-    </li>
-    <li>
-      <strong>Registered Accounts:</strong>
-      {{ registered_accounts|default:"0" }}
-    </li>
-    <li>
-      <strong>Registered Students:</strong>
-      {{ registered_students|default:"0" }}
-    </li>
-  </ul>
-
-  <p style="color: #666; font-size: 12px;">
-    Visitor counts are browser-session estimates. Registered account/student counts come from active profile records and are separate from guests.
-  </p>
+  <div class="unimap-admin-apps">
+    {% for app in app_list %}
+      <section class="module unimap-admin-app">
+        <table>
+          <caption><a href="{{ app.app_url }}" class="section" title="{{ app.name }}">{{ app.name }}</a></caption>
+          {% for model in app.models %}
+            <tr class="model-{{ model.object_name|lower }}">
+              {% if model.admin_url %}<th scope="row"><a href="{{ model.admin_url }}">{{ model.name }}</a></th>
+              {% else %}<th scope="row">{{ model.name }}</th>{% endif %}
+              <td>{% if model.add_url %}<a href="{{ model.add_url }}" class="addlink">{% translate 'Add' %}</a>{% endif %}</td>
+              <td>{% if model.admin_url %}<a href="{{ model.admin_url }}" class="changelink">{% translate 'Change' %}</a>{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </table>
+      </section>
+    {% empty %}
+      <p>{% translate "You don't have permission to view or edit anything." %}</p>
+    {% endfor %}
+  </div>
 </div>
-<!-- ===== End Site Statistics ===== -->
-
-{{ block.super }}
-
 {% endblock %}
