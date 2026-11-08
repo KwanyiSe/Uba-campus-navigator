@@ -1,20 +1,20 @@
 from django.core.cache import cache
-from django.db import IntegrityError, transaction
+from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
 
-from .models import SiteVisit, DailyStats, University
+from .models import DailyStats, DailyVisit, SiteVisit, University
 
 
 class SiteVisitMiddleware:
-    """Record lightweight visit analytics without slowing every page request.
+    """Count unique browser sessions once per university per local calendar day.
 
-    Static/admin/media paths and unsafe methods are ignored. University resolution is
-    cached for ten minutes, and a session's SiteVisit row is touched at most once per
-    ten minutes. DailyStats still increments at most once per session/university/day.
+    A database uniqueness constraint, rather than a cache-only flag, prevents
+    concurrent requests and multiple app workers from counting the same session
+    twice. The short cache only throttles SiteVisit.last_visit writes.
     """
 
-    EXCLUDED_PREFIXES = ("/admin/", "/static/", "/media/")
+    EXCLUDED_PREFIXES = ("/admin/", "/static/", "/media/", "/health/")
     UNIVERSITY_CACHE_SECONDS = 600
     VISIT_TOUCH_SECONDS = 600
 
@@ -30,20 +30,17 @@ class SiteVisitMiddleware:
             if university is not None:
                 if not request.session.session_key:
                     request.session.create()
-
                 session_key = request.session.session_key
                 today = timezone.localdate()
                 touch_key = f"unimap:sitevisit-touch:{session_key}:{university.pk}"
-
-                # A cache hit avoids all analytics database queries on ordinary page views.
                 if cache.add(touch_key, "1", timeout=self.VISIT_TOUCH_SECONDS):
                     try:
-                        self._record_visit(request, university, session_key, today)
+                        self._record_visit(request, university.pk, session_key, today)
                     except Exception:
-                        # Analytics must never prevent the requested page from loading.
                         cache.delete(touch_key)
+                        raise
         except Exception:
-            # Fail open: analytics is non-critical and must not affect navigation.
+            # Analytics are non-critical: never prevent the requested page loading.
             pass
 
         return self.get_response(request)
@@ -57,35 +54,36 @@ class SiteVisitMiddleware:
         if university_id is None:
             university = None
             if prefix != "__default__":
-                university = University.objects.filter(short_name__iexact=prefix, active=True).only("id").first()
+                university = University.objects.filter(
+                    short_name__iexact=prefix, active=True
+                ).only("id").first()
             if university is None:
                 university = University.objects.filter(active=True).only("id").order_by("id").first()
             university_id = university.pk if university else 0
             cache.set(cache_key, university_id, cls.UNIVERSITY_CACHE_SECONDS)
-        if not university_id:
-            return None
-        # Middleware only needs the foreign-key id; avoid fetching all university columns.
-        return University(pk=university_id)
+        return University(pk=university_id) if university_id else None
 
     @staticmethod
-    def _record_visit(request, university, session_key, today):
+    def _record_visit(request, university_id, session_key, today):
         now = timezone.now()
         with transaction.atomic():
             visit, created = SiteVisit.objects.get_or_create(
                 session_key=session_key,
-                defaults={"university_id": university.pk},
+                defaults={"university_id": university_id},
             )
             if not created:
-                updates = {"last_visit": now}
-                if visit.university_id != university.pk:
-                    updates["university_id"] = university.pk
-                SiteVisit.objects.filter(pk=visit.pk).update(**updates)
+                SiteVisit.objects.filter(pk=visit.pk).update(
+                    last_visit=now, university_id=university_id
+                )
 
-            counted_key = f"counted_date_{university.pk}"
-            if request.session.get(counted_key) != today.isoformat():
+            # This unique insert is the source of truth for daily unique visitors.
+            daily_visit, counted_today = DailyVisit.objects.get_or_create(
+                session_key=session_key,
+                university_id=university_id,
+                date=today,
+            )
+            if counted_today:
                 stats, _ = DailyStats.objects.get_or_create(
-                    university_id=university.pk,
-                    date=today,
+                    university_id=university_id, date=today
                 )
                 DailyStats.objects.filter(pk=stats.pk).update(visitors=F("visitors") + 1)
-                request.session[counted_key] = today.isoformat()

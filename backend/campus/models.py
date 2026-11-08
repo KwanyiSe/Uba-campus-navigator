@@ -115,6 +115,28 @@ class DailyStats(models.Model):
         return f"{self.university.short_name} - {self.date}"
     
 
+class DailyVisit(models.Model):
+    """One unique browser session counted once per university per local day."""
+
+    session_key = models.CharField(max_length=40)
+    university = models.ForeignKey(
+        University, on_delete=models.CASCADE, related_name="daily_visit_records"
+    )
+    date = models.DateField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("session_key", "university", "date"),
+                name="uniq_daily_browser_visit",
+            )
+        ]
+        indexes = [models.Index(fields=("university", "date"))]
+
+    def __str__(self):
+        return f"{self.university.short_name} - {self.date}"
+
+
 class CampusAdminUser(models.Model):
     # each user has exacly one CampusAdminUser profile
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="campus_admin")

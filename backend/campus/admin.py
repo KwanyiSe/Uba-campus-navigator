@@ -51,57 +51,22 @@ except AlreadyRegistered:
 # Helper: Admin Index Stats
 # ---------------------------
 def admin_index(request):
-    """
-    Returns visitor statistics.
-    Superuser → sees all universities
-    Campus admin → sees only their university
-    """
-
-    today = timezone.now().date()
-
-    # super user global stats
-    if request.user.is_superuser:
-        total_visitors = DailyStats.objects.aggregate(
-            total=models.Sum("visitors")
-        )["total"] or 0
-
-        visitors_today = DailyStats.objects.filter(date=today).aggregate(
-            total=models.Sum("visitors")
-        )["total"] or 0
-
-        return {
-            "total_visitors": total_visitors,
-            "visitors_today": visitors_today,
-            "registered_accounts": Profile.objects.filter(user__is_active=True).count(),
-            "registered_students": Profile.objects.filter(user__is_active=True, role="student").count(),
-        }
-
-    # campus admin only their university
-    if hasattr(request.user, "campus_admin"):
-        university = request.user.campus_admin.university
-
-        total_visitors = DailyStats.objects.filter(
-            university=university
-        ).aggregate(
-            total=models.Sum("visitors")
-        )["total"] or 0
-
-        visitors_today = DailyStats.objects.filter(
-            university=university,
-            date=today
-        ).aggregate(
-            total=models.Sum("visitors")
-        )["total"] or 0
-
-        profiles = Profile.objects.filter(university=university, user__is_active=True)
-        return {
-            "total_visitors": total_visitors,
-            "visitors_today": visitors_today,
-            "registered_accounts": profiles.count(),
-            "registered_students": profiles.filter(role="student").count(),
-        }
-
-    return {}
+    """Show consistent campus-wide analytics to every admin account."""
+    today = timezone.localdate()
+    total_visitors = DailyStats.objects.aggregate(
+        total=models.Sum("visitors")
+    )["total"] or 0
+    visitors_today = DailyStats.objects.filter(date=today).aggregate(
+        total=models.Sum("visitors")
+    )["total"] or 0
+    return {
+        "total_visitors": total_visitors,
+        "visitors_today": visitors_today,
+        "registered_accounts": Profile.objects.filter(user__is_active=True).count(),
+        "registered_students": Profile.objects.filter(
+            user__is_active=True, role="student"
+        ).count(),
+    }
 
 # ---------------------------
 # Admin for University
@@ -154,14 +119,8 @@ class DailyStatsAdmin(admin.ModelAdmin):
     ordering = ("-date",)
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request)
-
-        if request.user.is_superuser:
-            return qs
-
-        return qs.filter(
-            university=request.user.campus_admin.university
-        )
+        # Daily totals are shared across all admin accounts for consistent reporting.
+        return super().get_queryset(request).select_related("university")
 
 # ---------------------------
 # Admin for SiteVisit

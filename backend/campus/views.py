@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404
+from django.http import HttpResponse
 from rest_framework import generics
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -208,3 +209,9 @@ def format_duration(seconds: float):
     minutes = seconds // 60
     remaining = seconds % 60
     return f"{minutes} min" if remaining == 0 else f"{minutes} min {remaining} sec"
+
+
+
+def health_check(request):
+    """Lightweight endpoint for uptime checks; does not query the database."""
+    return HttpResponse("ok", content_type="text/plain")

@@ -1169,3 +1169,30 @@ body:not(.news-viewer-open):not(.news-profile-open):not(.news-composer-open):not
 }
 .page-shell { min-height: 100vh; height: auto; overflow: visible; }
 main.content { min-height: 1px; overflow: visible; padding-bottom: 96px; }
+
+
+/* Document-level scrolling: use the root viewport, not a nested body scroller.
+   overflow-x:clip avoids the overflow-x:hidden side effect that can turn a
+   visible vertical overflow into an unintended scrolling container. */
+html { min-height:100%; height:auto; overflow-x:clip !important; overflow-y:scroll !important; }
+body { min-height:100vh; height:auto !important; overflow-x:clip !important; overflow-y:visible !important; }
+.page-shell, main.content { height:auto !important; min-height:0; overflow:visible !important; }
+.page-shell { min-height:100vh !important; padding-bottom:100px; }
+
+.community-modal[hidden] { display:none !important; }
+.community-modal { position:fixed; inset:0; z-index:5000; display:grid; place-items:center; padding:18px; }
+.community-modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,.78); backdrop-filter:blur(7px); }
+.community-modal-card { position:relative; z-index:1; width:min(440px,100%); padding:26px; border:1px solid var(--border-strong); border-radius:22px; background:linear-gradient(180deg,#122238,#0b1726); box-shadow:0 28px 90px rgba(0,0,0,.58); }
+.community-modal-card h2 { margin:14px 34px 10px 0; font-size:23px; }
+.community-modal-card p { color:var(--muted); font-size:14px; line-height:1.65; }
+.community-modal-card .community-modal-emphasis { color:#fff; font-weight:800; margin-bottom:18px; }
+.community-join-link,.community-joined-button { width:100%; margin-top:8px; }
+.community-later-button { display:block; margin:12px auto 0; padding:8px 12px; border:0; background:transparent; color:var(--muted); font-size:12px; }
+.community-modal-card small { display:block; margin-top:14px; color:var(--muted-2); font-size:10px; line-height:1.5; }
+.community-modal-close { position:absolute; top:12px; right:12px; width:34px; height:34px; border:1px solid var(--border); border-radius:10px; background:rgba(255,255,255,.05); color:#fff; font-size:22px; }
+.synkcore-team-card { display:flex; align-items:center; gap:18px; padding:22px; }
+.synkcore-brand-mark { width:68px; height:68px; flex:0 0 68px; display:grid; place-items:center; border-radius:18px; background:linear-gradient(135deg,#1677ff,#754bdb); color:#fff; font-size:20px; font-weight:900; letter-spacing:-.04em; }
+.synkcore-team-card h3 { margin:9px 0 4px; font-size:19px; }
+.synkcore-team-card p { margin:0 0 6px; font-size:12px; line-height:1.6; }
+.synkcore-team-card .synkcore-pending { color:var(--muted-2); font-size:11px; }
+@media(max-width:520px){ .community-modal-card{padding:22px 18px}.synkcore-team-card{align-items:flex-start}.synkcore-brand-mark{width:54px;height:54px;flex-basis:54px} }

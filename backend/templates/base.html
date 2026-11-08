@@ -6,9 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#07111f">
   <title>{% block title %}UNIMAP{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'css/shared.css' %}?v=20261106-scroll-perf-2">
-  <link rel="stylesheet" href="{% static 'css/unimap.css' %}?v=20261106-scroll-perf-2">
-  <link rel="stylesheet" href="{% static 'css/accounts.css' %}?v=20261106-scroll-perf-2">
+  <link rel="stylesheet" href="{% static 'css/shared.css' %}?v=20261106-community-analytics-3">
+  <link rel="stylesheet" href="{% static 'css/unimap.css' %}?v=20261106-community-analytics-3">
+  <link rel="stylesheet" href="{% static 'css/accounts.css' %}?v=20261106-community-analytics-3">
   <link rel="stylesheet" href="{% static 'css/cc.css' %}">
   <link rel="stylesheet" href="{% static 'css/notifications.css' %}">
   {% block extra_head %}{% endblock %}
@@ -46,6 +46,47 @@
     {% block content %}{% endblock %}
   </main>
 </div>
+
+<div class="community-modal" id="communityModal" hidden
+     data-user-id="{% if user.is_authenticated %}{{ user.pk }}{% else %}guest{% endif %}"
+     data-login-token="{% if user.is_authenticated and user.last_login %}{{ user.last_login|date:'U' }}{% else %}guest{% endif %}"
+     role="dialog" aria-modal="true" aria-labelledby="communityModalTitle">
+  <div class="community-modal-backdrop" data-community-dismiss></div>
+  <section class="community-modal-card">
+    <button type="button" class="community-modal-close" data-community-dismiss aria-label="Close">×</button>
+    <span class="badge badge-blue">UNIMAP COMMUNITY</span>
+    <h2 id="communityModalTitle">Join the UNIMAP community</h2>
+    <p>Join the community for important information. Please make sure your Class Coordinator (CC) knows about it. Your department can also use UNIMAP for automatic attendance.</p>
+    <p class="community-modal-emphasis">Tell your CC about it.</p>
+    <a class="btn btn-primary community-join-link" href="https://chat.whatsapp.com/KIltfEVmKdI4oifO4CGC4r" target="_blank" rel="noopener noreferrer">Join WhatsApp community</a>
+    <button type="button" class="btn btn-secondary community-joined-button" id="communityJoinedButton">I've joined</button>
+    <button type="button" class="community-later-button" data-community-dismiss>Maybe later</button>
+    <small>UNIMAP cannot automatically verify WhatsApp group membership. Select “I've joined” after joining to stop this reminder.</small>
+  </section>
+</div>
+<script>
+(function () {
+  const modal = document.getElementById("communityModal");
+  if (!modal) return;
+  const userId = modal.dataset.userId || "guest";
+  const loginToken = modal.dataset.loginToken || "guest";
+  const joinedKey = `unimap-community-joined-${userId}`;
+  const dismissedKey = `unimap-community-dismissed-${userId}-${loginToken}`;
+  try {
+    if (localStorage.getItem(joinedKey) === "1" || sessionStorage.getItem(dismissedKey) === "1") return;
+  } catch (_) { /* Show the invitation if browser storage is unavailable. */ }
+  modal.hidden = false;
+  const dismiss = () => {
+    try { sessionStorage.setItem(dismissedKey, "1"); } catch (_) {}
+    modal.hidden = true;
+  };
+  modal.querySelectorAll("[data-community-dismiss]").forEach(button => button.addEventListener("click", dismiss));
+  document.getElementById("communityJoinedButton")?.addEventListener("click", () => {
+    try { localStorage.setItem(joinedKey, "1"); } catch (_) {}
+    modal.hidden = true;
+  });
+})();
+</script>
 
 <nav class="bottom-nav" aria-label="Main navigation">
   <a class="nav-item {% if request.resolver_match.url_name == 'campus-map' %}active{% endif %}" href="{% url 'campus-map' %}">

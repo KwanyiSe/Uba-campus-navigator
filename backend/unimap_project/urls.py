@@ -4,12 +4,14 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.urls import path, include
 
 from campus.admin import campus_admin_site
+from campus.views import health_check
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
 
 urlpatterns = [
+    path("health/", health_check, name="health-check"),
     # Custom campus administration site
     path("admin/", campus_admin_site.urls),
 
