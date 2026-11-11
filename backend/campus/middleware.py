@@ -14,7 +14,9 @@ class SiteVisitMiddleware:
     twice. The short cache only throttles SiteVisit.last_visit writes.
     """
 
-    EXCLUDED_PREFIXES = ("/admin/", "/static/", "/media/", "/health/")
+    EXCLUDED_PREFIXES = ("/admin/", "/static/", "/media/", "/health")
+    # Exclude both /health and /health/ so monitoring services cannot create
+    # visitor records even if they omit Django's trailing slash.
     UNIVERSITY_CACHE_SECONDS = 600
     VISIT_TOUCH_SECONDS = 600
 

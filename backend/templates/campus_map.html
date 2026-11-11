@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>UNIMAP — Campus Map</title>
 <link rel="manifest" href="{% static 'pwa/manifest.json' %}">
-<link rel="stylesheet" href="{% static 'css/campus-map.css' %}?v=20261111-map-feedback">
+<link rel="stylesheet" href="{% static 'css/campus-map.css' %}?v=20261111-map-search-fix2">
 <link rel="apple-touch-icon" href="{% static 'pwa/icon-192.png' %}">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css">
@@ -135,7 +135,6 @@
   </section>
 </div>
 
-<button class="map-report-fab" id="mapReportFab" type="button" aria-label="Report a problem">Report a problem</button>
 
 <div class="map-report-modal" id="mapReportModal" hidden role="dialog" aria-modal="true" aria-labelledby="mapReportTitle">
   <div class="map-report-backdrop" data-map-report-close></div>
@@ -247,7 +246,7 @@
   <div class="splash-progress"><span></span></div>
 </div>
 {% endif %}
-<script src="{% static 'js/campus-map.js' %}?v=20261111-map-feedback"></script>
+<script src="{% static 'js/campus-map.js' %}?v=20261111-map-search-fix2"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register("{% static 'pwa/service-worker.js' %}?v=20261016-cache-policy").catch(console.error));
