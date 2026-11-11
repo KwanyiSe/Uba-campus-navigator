@@ -84,7 +84,10 @@ class UniversityAdmin(admin.ModelAdmin):
 @admin.register(Building, site=campus_admin_site)
 class BuildingAdmin(admin.ModelAdmin):
     """Filters buildings per university for non-superusers."""
-    list_display = ("name", "category", "status", "capacity", "floor", "university", "has_geofence")
+    list_display = (
+        "name", "category", "status", "capacity", "floor", "university",
+        "has_geofence", "geofence_status", "geofence_buffer_m",
+    )
 
     @admin.display(boolean=True, description="Geofence")
     def has_geofence(self, obj):

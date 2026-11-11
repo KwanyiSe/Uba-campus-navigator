@@ -1,5 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
+from django.conf import settings as django_settings
+import hmac
 from rest_framework import generics
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -213,5 +215,15 @@ def format_duration(seconds: float):
 
 
 def health_check(request):
-    """Lightweight endpoint for uptime checks; does not query the database."""
+    """Lightweight uptime endpoint; excluded from visitor analytics.
+
+    When HEALTH_CHECK_TOKEN is configured, monitoring providers must send it
+    in the X-UNIMAP-HEALTH-TOKEN header. The endpoint deliberately avoids DB
+    queries so it can report application-process availability independently.
+    """
+    expected = getattr(django_settings, "HEALTH_CHECK_TOKEN", "")
+    if expected:
+        supplied = request.headers.get("X-UNIMAP-HEALTH-TOKEN", "")
+        if not supplied or not hmac.compare_digest(str(supplied), str(expected)):
+            return HttpResponse("unauthorized", status=401, content_type="text/plain")
     return HttpResponse("ok", content_type="text/plain")

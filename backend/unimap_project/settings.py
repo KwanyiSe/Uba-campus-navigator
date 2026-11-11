@@ -23,6 +23,9 @@ SECRET_KEY = config("SECRET_KEY")
 
 ORS_KEY = config("ORS_KEY")
 
+# Optional shared secret for cron-job.org health checks (set in Render env vars).
+HEALTH_CHECK_TOKEN = config("HEALTH_CHECK_TOKEN", default="").strip()
+
 DEBUG = False
 
 ALLOWED_HOSTS = [

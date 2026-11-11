@@ -257,3 +257,27 @@
   object-fit: cover;
   border-radius: 50%;
 }
+
+
+/* Map community invitation + quick feedback */
+.map-community-modal[hidden],.map-report-modal[hidden]{display:none!important}
+.map-community-modal,.map-report-modal{position:fixed;inset:0;z-index:1800;display:grid;place-items:center;padding:18px;font-family:Inter,system-ui,sans-serif}
+.map-community-backdrop,.map-report-backdrop{position:absolute;inset:0;background:rgba(2,8,15,.72);backdrop-filter:blur(5px)}
+.map-community-card,.map-report-card{position:relative;width:min(440px,100%);max-height:calc(100dvh - 36px);overflow:auto;padding:25px;border:1px solid rgba(255,255,255,.13);border-radius:22px;background:#0b1725;color:#f7fafc;box-shadow:0 25px 80px rgba(0,0,0,.5)}
+.map-community-card h2,.map-report-card h2{font-size:23px;line-height:1.2;margin:12px 0}
+.map-community-card p,.map-report-card p{font-size:14px;line-height:1.55;color:#c4cfdb}
+.map-community-tag{display:inline-block;padding:6px 9px;border-radius:999px;background:#12345a;color:#8fc4ff;font-size:10px;font-weight:850;letter-spacing:.08em}
+.map-community-close,.map-report-close{position:absolute;right:13px;top:10px;border:0;background:transparent;color:#cbd5e1;font-size:27px}
+.map-community-emphasis{font-weight:800;color:#fff!important}
+.map-community-primary,.map-community-secondary,.map-community-later,.map-community-report{width:100%;min-height:43px;margin-top:9px;border-radius:12px;font-weight:750;text-align:center;display:flex;align-items:center;justify-content:center;text-decoration:none;cursor:pointer;padding:10px 14px}
+.map-community-primary{border:0;background:#1677ff;color:#fff}
+.map-community-secondary{border:1px solid #3b526c;background:#14263a;color:#fff}
+.map-community-later,.map-community-report{border:0;background:transparent;color:#a9c9ee}
+.map-community-card small{display:block;margin-top:12px;color:#8e9bab;font-size:11px;line-height:1.45}
+.map-report-fab{position:fixed;z-index:700;right:14px;bottom:calc(145px + env(safe-area-inset-bottom));border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:12px 16px;background:#1677ff;color:#fff;font-size:12px;font-weight:850;box-shadow:0 10px 28px rgba(0,0,0,.35);pointer-events:auto}
+.map-report-card form{display:grid;gap:12px;margin-top:15px}
+.map-report-card label{display:grid;gap:6px;color:#dce6f1;font-size:12px;font-weight:700}
+.map-report-card input,.map-report-card select,.map-report-card textarea{width:100%;border:1px solid #33465b;border-radius:10px;padding:11px;background:#101f30;color:#f7fafc;font:inherit;font-size:13px}
+.map-report-card textarea{resize:vertical}
+.map-report-result{min-height:20px;margin:0!important;font-size:12px!important}
+@media(max-width:600px){.map-community-card,.map-report-card{padding:21px}.map-report-fab{bottom:calc(136px + env(safe-area-inset-bottom));right:10px}}

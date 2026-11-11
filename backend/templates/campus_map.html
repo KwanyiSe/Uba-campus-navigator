@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>UNIMAP — Campus Map</title>
 <link rel="manifest" href="{% static 'pwa/manifest.json' %}">
-<link rel="stylesheet" href="{% static 'css/campus-map.css' %}">
+<link rel="stylesheet" href="{% static 'css/campus-map.css' %}?v=20261111-map-feedback">
 <link rel="apple-touch-icon" href="{% static 'pwa/icon-192.png' %}">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css">
@@ -114,6 +114,130 @@
   <div id="mapToast" class="toast"></div>
 </div>
 
+
+<!-- Community invitation and map-level problem reporting (available to guests too). -->
+<div class="map-community-modal" id="mapCommunityModal" hidden
+     data-user-id="{% if user.is_authenticated %}{{ user.pk }}{% else %}guest{% endif %}"
+     data-login-token="{% if user.is_authenticated and user.last_login %}{{ user.last_login|date:'U' }}{% else %}guest{% endif %}"
+     role="dialog" aria-modal="true" aria-labelledby="mapCommunityTitle">
+  <div class="map-community-backdrop" data-map-community-dismiss></div>
+  <section class="map-community-card">
+    <button type="button" class="map-community-close" data-map-community-dismiss aria-label="Close">×</button>
+    <span class="map-community-tag">UNIMAP COMMUNITY</span>
+    <h2 id="mapCommunityTitle">Join the UNIMAP community</h2>
+    <p>Join our community for important information and updates. Please make sure your Class Coordinator (CC) knows about UNIMAP. Your department can also use it for automatic attendance.</p>
+    <p class="map-community-emphasis">Tell your CC about it.</p>
+    <a class="map-community-primary" href="https://chat.whatsapp.com/KIltfEVmKdI4oifO4CGC4r" target="_blank" rel="noopener noreferrer">Join WhatsApp community</a>
+    <button type="button" class="map-community-secondary" id="mapCommunityJoined">I've joined</button>
+    <button type="button" class="map-community-later" data-map-community-dismiss>Maybe later</button>
+    <button type="button" class="map-community-report" id="communityReportProblem">Report a problem</button>
+    <small>UNIMAP cannot automatically verify WhatsApp membership. Select “I've joined” after joining to stop this reminder.</small>
+  </section>
+</div>
+
+<button class="map-report-fab" id="mapReportFab" type="button" aria-label="Report a problem">Report a problem</button>
+
+<div class="map-report-modal" id="mapReportModal" hidden role="dialog" aria-modal="true" aria-labelledby="mapReportTitle">
+  <div class="map-report-backdrop" data-map-report-close></div>
+  <section class="map-report-card">
+    <button type="button" class="map-report-close" data-map-report-close aria-label="Close">×</button>
+    <h2 id="mapReportTitle">Report a problem</h2>
+    <p>Tell the UNIMAP team what went wrong. Guests can report problems too.</p>
+    <form id="mapReportForm">
+      {% csrf_token %}
+      {% if not user.is_authenticated %}
+      <label>Name<input name="name" maxlength="100" required></label>
+      <label>Email<input name="email" type="email" maxlength="254" required></label>
+      {% endif %}
+      <label>Problem type
+        <select name="category" required>
+          <option value="GPS / Location problem">GPS / Location problem</option>
+          <option value="Attendance not recorded">Attendance not recorded</option>
+          <option value="Incorrect building location">Incorrect building location</option>
+          <option value="Map problem">Map problem</option>
+          <option value="Login problem">Login problem</option>
+          <option value="Other">Other</option>
+        </select>
+      </label>
+      <label>Describe the problem<textarea name="message" rows="4" maxlength="5000" required></textarea></label>
+      <button class="map-community-primary" type="submit" id="mapReportSubmit">Submit report</button>
+      <p id="mapReportResult" class="map-report-result" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+</div>
+<script>
+(function () {
+  const community = document.getElementById("mapCommunityModal");
+  const report = document.getElementById("mapReportModal");
+  const fab = document.getElementById("mapReportFab");
+  if (!community || !report || !fab) return;
+
+  const userId = community.dataset.userId || "guest";
+  const loginToken = community.dataset.loginToken || "guest";
+  const joinedKey = `unimap-community-joined-${userId}`;
+  const dismissedKey = `unimap-community-dismissed-${userId}-${loginToken}`;
+  const hideCommunity = () => { community.hidden = true; };
+  try {
+    if (localStorage.getItem(joinedKey) !== "1" && sessionStorage.getItem(dismissedKey) !== "1") {
+      community.hidden = false;
+    }
+  } catch (_) { community.hidden = false; }
+
+  community.querySelectorAll("[data-map-community-dismiss]").forEach(el => el.addEventListener("click", () => {
+    try { sessionStorage.setItem(dismissedKey, "1"); } catch (_) {}
+    hideCommunity();
+  }));
+  document.getElementById("mapCommunityJoined").addEventListener("click", () => {
+    try { localStorage.setItem(joinedKey, "1"); } catch (_) {}
+    hideCommunity();
+  });
+
+  const openReport = () => { hideCommunity(); report.hidden = false; };
+  fab.addEventListener("click", openReport);
+  document.getElementById("communityReportProblem").addEventListener("click", openReport);
+  community.querySelectorAll("[data-open-map-report]").forEach(el => el.addEventListener("click", openReport));
+  report.querySelectorAll("[data-map-report-close]").forEach(el => el.addEventListener("click", () => { report.hidden = true; }));
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") { report.hidden = true; hideCommunity(); }
+  });
+
+  const form = document.getElementById("mapReportForm");
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const submit = document.getElementById("mapReportSubmit");
+    const result = document.getElementById("mapReportResult");
+    const fd = new FormData(form);
+    const category = fd.get("category");
+    const payload = {
+      subject: `Map report: ${category}`,
+      message: `${fd.get("message")}\n\nPage: ${window.location.href}\nReported at: ${new Date().toISOString()}`
+    };
+    if (fd.has("name")) payload.name = fd.get("name");
+    if (fd.has("email")) payload.email = fd.get("email");
+    const csrf = form.querySelector('[name="csrfmiddlewaretoken"]')?.value || "";
+    submit.disabled = true;
+    result.textContent = "Submitting…";
+    try {
+      const response = await fetch("/api/feedback/submit/", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {"Content-Type": "application/json", "X-CSRFToken": csrf},
+        body: JSON.stringify(payload)
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const detail = body.detail || Object.values(body).flat().join(" ");
+        throw new Error(detail || "Could not submit your report. Please try again.");
+      }
+      result.textContent = "Thank you. Your report has been submitted.";
+      form.reset();
+    } catch (error) {
+      result.textContent = error.message || "Could not submit your report. Please try again.";
+    } finally { submit.disabled = false; }
+  });
+})();
+</script>
+
 {% if show_unimap_splash %}
 <div id="unimapSplash" class="unimap-splash" aria-label="Welcome to UNIMAP">
   <div class="splash-glow"></div>
@@ -123,7 +247,7 @@
   <div class="splash-progress"><span></span></div>
 </div>
 {% endif %}
-<script src="{% static 'js/campus-map.js' %}?v=20261016-cache-state-compass"></script>
+<script src="{% static 'js/campus-map.js' %}?v=20261111-map-feedback"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register("{% static 'pwa/service-worker.js' %}?v=20261016-cache-policy").catch(console.error));

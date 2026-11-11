@@ -56,7 +56,18 @@ class Building(models.Model):
     opening_hours = models.CharField(max_length=120, blank=True)
     photo = models.ImageField(storage=BuildingMediaStorage(), upload_to="buildings/photos/", blank=True, null=True)
     icon = models.ImageField(storage=BuildingMediaStorage(), upload_to="buildings/icons/", blank=True, null=True)
+    # Approved measured building footprint (lat/lng vertices).
     geofence = models.JSONField(default=list, blank=True)
+    # Larger fallback envelope used only when attendance verification applies
+    # explicit GPS-accuracy and timetable rules. Never treat it as the footprint.
+    compensation_geofence = models.JSONField(default=list, blank=True)
+    geofence_buffer_m = models.PositiveSmallIntegerField(default=10)
+    geofence_status = models.CharField(
+        max_length=20,
+        choices=(("draft", "Draft"), ("approved", "Approved")),
+        default="draft",
+    )
+    geofence_version = models.PositiveIntegerField(default=1)
     
     university = models.ForeignKey(
     University,
